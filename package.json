@@ -1,0 +1,27 @@
+{
+  "name": "hsync",
+  "version": "0.5.0",
+  "description": "client for hsync-server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --inspect index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/monteslu/hsync.git"
+  },
+  "keywords": [],
+  "author": "Luis Montes",
+  "license": "ISC",
+  "dependencies": {
+    "b64id": "^1.0.0",
+    "debug": "^4.3.1",
+    "mqtt": "^4.2.6",
+    "rawr": "^0.14.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}

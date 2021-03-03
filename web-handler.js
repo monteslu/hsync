@@ -1,5 +1,8 @@
-const debug = require('debug')('hsync:web');
 const net = require('net');
+const debug = require('debug')('hsync:web');
+const debugError = require('debug')('hsync:error');
+
+debugError.color = 1;
 
 function createHanlder({myHostName, localHost, port, mqConn}) {
 

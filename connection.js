@@ -10,7 +10,7 @@ debug.color = 3;
 debugVerbose.color = 2;
 debugError.color = 1;
 
-function createhsync(config) {
+function createHsync(config) {
   const {
     hsyncServer,
     hsyncSecret,
@@ -161,5 +161,5 @@ function createhsync(config) {
 }
 
 module.exports = {
-  createhsync,
+  createHsync,
 };

@@ -1,6 +1,7 @@
 const rawr = require('rawr');
 const b64id = require('b64id');
 const debug = require('debug')('hsync:rpc');
+const EventEmitter = require('events').EventEmitter;
 
 function createRPCPeer({ hostName, hsyncClient, timeout = 10000, methods = {} }) {
   if (!hostName) {
@@ -42,11 +43,11 @@ function createServerReplyPeer({ requestId, hsyncClient, methods = {}}) {
       msg = JSON.stringify(msg);
     }
     const topic = `ssrpc/${hsyncClient.myHostName}/${requestId}`;
-    debugVerbose('↑ server rpc reply', msg);
+    debug('↑ server rpc reply', msg);
     hsyncClient.mqConn.publish(topic, Buffer.from(msg));
   };
   transport.receiveData = (msg) => {
-    debugVerbose('↓ server rpc', msg);
+    debug('↓ server rpc', msg);
     if(msg) {
       msg = JSON.parse(msg);
     }

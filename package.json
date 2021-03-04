@@ -1,6 +1,6 @@
 {
   "name": "hsync",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "client for hsync-server",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,13 @@
     "type": "git",
     "url": "git://github.com/monteslu/hsync.git"
   },
-  "keywords": [],
+  "keywords": [
+    "iot",
+    "json-rpc",
+    "ngrok",
+    "websocket",
+    "mqtt"
+  ],
   "author": "Luis Montes",
   "license": "ISC",
   "dependencies": {

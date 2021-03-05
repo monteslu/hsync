@@ -1,10 +1,12 @@
 const mqtt = require('mqtt');
 const EventEmitter = require('events').EventEmitter;
+const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
 const debugVerbose = require('debug')('hsync:verbose');
 const debugError = require('debug')('hsync:error');
-const { createRPCPeer, createServerReplyPeer } = require('./rpc');
-const createWebHandler = require('./web-handler');
+const { createRPCPeer, createServerReplyPeer } = require('./lib/rpc');
+const createWebHandler = require('./lib/web-handler');
+const createSocketListenHandler = require('./lib/socket-listen-handler');
 
 debug.color = 3;
 debugVerbose.color = 2;
@@ -23,6 +25,7 @@ function createHsync(config) {
   const hsyncClient = {};
   hsyncClient.config = config;
   const peers = {};
+  const socketListeners = {};
   const events = new EventEmitter();
   
   hsyncClient.on = events.on;
@@ -58,7 +61,7 @@ function createHsync(config) {
       return;
     }
     // message is Buffer
-    const [name, hostName, segment3, action] = topic.split('/');
+    const [name, hostName, segment3, action, segment5] = topic.split('/');
     debugVerbose('\n↓ MQTT' , topic);
     if (name === 'web') {
       webHandler.handleWebRequest(hostName, segment3, action, message);
@@ -80,6 +83,12 @@ function createHsync(config) {
       else if (action === 'rpc') {
         const peer = getPeer({hostName: from, temporary: true});
         peer.transport.receiveData(message.toString());
+      }
+      else if (action === 'socketData') {
+        events.emit('socketData', from, segment5, message);
+      }
+      else if (action === 'socketClose') {
+        events.emit('socketClose', from, segment5);
       }
     }
 
@@ -139,10 +148,25 @@ function createHsync(config) {
     })
   }
 
+  function getSocketListeners () {
+    return Object.keys(socketListeners).map((id) => {
+      return { info: socketListeners[id].info, id };
+    });
+  }
+
+  function addSocketListener (port, hostName, targetPort, targetHost = 'localhost') {
+    const handler = createSocketListenHandler({port, hostName, targetPort, targetHost, hsyncClient});
+    const id = b64id.generateId();
+    socketListeners[id] = {handler, info: {port, hostName, targetPort, targetHost}, id};
+    return getSocketListeners();
+  }
+
   const serverReplyMethods = {
     ping: (greeting) => {
       return `${greeting} back atcha from client. ${Date.now()}`;
     },
+    addSocketListener,
+    getSocketListeners,
   };
 
   const peerMethods = {

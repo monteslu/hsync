@@ -25,7 +25,9 @@
     "b64id": "^1.0.0",
     "debug": "^4.3.1",
     "mqtt": "^4.2.6",
-    "rawr": "^0.14.0"
+    "mqtt-packet": "^6.9.0",
+    "node-datachannel": "^0.0.28-dev",
+    "rawr": "^0.15.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"

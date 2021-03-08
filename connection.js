@@ -4,9 +4,11 @@ const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
 const debugVerbose = require('debug')('hsync:verbose');
 const debugError = require('debug')('hsync:error');
-const { createRPCPeer, createServerReplyPeer } = require('./lib/rpc');
+const { getPRCPeer, createServerReplyPeer, getRPCPeer } = require('./lib/rpc');
 const createWebHandler = require('./lib/web-handler');
-const createSocketListenHandler = require('./lib/socket-listen-handler');
+const { createSocketListenHandler, receiveRelayData } = require('./lib/socket-listen-handler');
+const { createSocketRelayHandler, connectRelaySocket, receiveSocketData } = require('./lib/socket-relay-handler');
+const { receiveRTCSignal } = require('./lib/data-channel');
 
 debug.color = 3;
 debugVerbose.color = 2;
@@ -26,6 +28,7 @@ function createHsync(config) {
   hsyncClient.config = config;
   const peers = {};
   const socketListeners = {};
+  const socketRelays = {};
   const events = new EventEmitter();
   
   hsyncClient.on = events.on;
@@ -81,11 +84,19 @@ function createHsync(config) {
         peer.transport.receiveData(message.toString());
       }
       else if (action === 'rpc') {
-        const peer = getPeer({hostName: from, temporary: true});
+        const peer = getRPCPeer({hostName: from, temporary: true, hsyncClient});
         peer.transport.receiveData(message.toString());
       }
+      else if (action === 'rtc') {
+        receiveRTCSignal(from, message, hsyncClient);
+      }
       else if (action === 'socketData') {
-        events.emit('socketData', from, segment5, message);
+        // events.emit('socketData', from, segment5, message);
+        receiveSocketData(segment5, message);
+      }
+      else if (action === 'relayData') {
+        // events.emit('socketData', from, segment5, message);
+        receiveRelayData(segment5, message);
       }
       else if (action === 'socketClose') {
         events.emit('socketClose', from, segment5);
@@ -93,18 +104,6 @@ function createHsync(config) {
     }
 
   });
-
-  function getPeer({hostName, temporary, timeout = 10000}) {
-    let peer = peers[host];
-    if (!peer) {
-      peer = createRPCPeer({hostName, hsyncClient, timeout, methods: peerMethods});
-      if (temporary) {
-        peer.rpcTemporary = true;
-      }
-      peers[host] = peer;
-    }
-    return peer;
-  }
 
   function sendJson(host, json) {
     if (!host || !json) {
@@ -161,24 +160,43 @@ function createHsync(config) {
     return getSocketListeners();
   }
 
+  function getSocketRelays () {
+    return Object.keys(socketRelays).map((id) => {
+      return { info: socketRelays[id].info, id };
+    });
+  }
+
+  function addSocketRelay (from, targetPort, targetHost = 'localhost') {
+    const handler = createSocketRelayHandler({from, targetPort, targetHost, hsyncClient});
+    const id = b64id.generateId();
+    socketRelays[id] = {handler, info: {from, targetPort, targetHost}, id};
+    return getSocketRelays();
+  }
+
   const serverReplyMethods = {
     ping: (greeting) => {
       return `${greeting} back atcha from client. ${Date.now()}`;
     },
     addSocketListener,
     getSocketListeners,
+    addSocketRelay,
+    getSocketRelays,
   };
 
   const peerMethods = {
     ping: (host, greeting) => {
       return `${greeting} back atcha, ${host}.`;
     },
+    connectSocket: (hostName, socketId, targetPort, targetHost) => {
+      console.log('connectiung', hostName, targetPort, targetHost);
+      return connectRelaySocket({socketId, hostName, targetPort, hsyncClient});
+    }
   };
 
   hsyncClient.sendJson = sendJson;
   hsyncClient.endClient = endClient;
   hsyncClient.serverReplyMethods = serverReplyMethods;
-  hsyncClient.getPeer = getPeer;
+  hsyncClient.getPRCPeer = getPRCPeer;
   hsyncClient.peerMethods = peerMethods;
 
   return hsyncClient;

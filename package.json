@@ -8,6 +8,7 @@
     "dev": "nodemon --inspect index.js",
     "start": "node index.js"
   },
+  "bin": "cli.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/monteslu/hsync.git"
@@ -24,10 +25,12 @@
   "dependencies": {
     "b64id": "^1.0.0",
     "debug": "^4.3.1",
+    "isomorphic-fetch": "^3.0.0",
     "mqtt": "^4.2.6",
     "mqtt-packet": "^6.9.0",
     "node-datachannel": "^0.0.28-dev",
-    "rawr": "^0.15.0"
+    "rawr": "^0.15.0",
+    "yargs": "^16.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"

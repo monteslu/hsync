@@ -32,6 +32,10 @@ function createHsync(config) {
   const events = new EventEmitter();
   
   hsyncClient.on = events.on;
+  hsyncClient.once = (topic, callback) => {
+    console.log('topic', callback);
+    events.once(topic, callback);
+  };
   hsyncClient.emit = events.emit;
   hsyncClient.peers = peers;
   
@@ -181,6 +185,12 @@ function createHsync(config) {
     getSocketListeners,
     addSocketRelay,
     getSocketRelays,
+    getStats: () => {
+      return {
+        relays: getSocketRelays(),
+        listeners: getSocketListeners(),
+      }
+    },
   };
 
   const peerMethods = {
@@ -188,7 +198,6 @@ function createHsync(config) {
       return `${greeting} back atcha, ${host}.`;
     },
     connectSocket: (hostName, socketId, targetPort, targetHost) => {
-      console.log('connectiung', hostName, targetPort, targetHost);
       return connectRelaySocket({socketId, hostName, targetPort, hsyncClient});
     }
   };

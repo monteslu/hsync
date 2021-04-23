@@ -20,7 +20,7 @@ keys.forEach((k) => {
         hsyncServer: value,
         hsyncSecret: process.env['HSYNC_SECRET_' + name] || baseConfig.hsyncSecret,
         localHost: process.env['LOCAL_HOST_' + name] || baseConfig.localHost,
-        port: process.env['PORT_' + name] || baseConfig.port,
+        port: process.env['PORT' + name] || baseConfig.port,
         hsyncBase: process.env['HSYNC_BASE_' + name] || baseConfig.hsyncBase,
         keepalive: parseInt(process.env['HSYNC_KEEP_ALIVE_' + name]) || baseConfig.keepalive,
       })

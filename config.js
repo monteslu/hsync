@@ -12,7 +12,7 @@ const connections = [baseConfig];
 const keys = Object.keys(process.env);
 keys.forEach((k) => {
   if(k.startsWith('HSYNC_SERVER_')) {
-    const name = k.substring(12);
+    const name = k.substring(13);
     const value = process.env[k];
     if (name && value) {
       connections.push({

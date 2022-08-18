@@ -14,14 +14,19 @@ clone repo
 set enviroment:
 
 
-hsync server URL
+### hsync server URL
 `export HSYNC_SERVER="wss://myhost.myserver.com"`
 
 
-secret for your hsync client
+### secret for your hsync client
 `export HSYNC_SECRET="*****************"`
 
-local webserver port
+### local webserver port
 `export PORT="8080"`
+
+### run
+`node index`
+
+
 
 

@@ -1,4 +1,5 @@
 const mqtt = require('mqtt');
+const fetch = require('isomorphic-fetch');
 const EventEmitter = require('events').EventEmitter;
 const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
@@ -12,15 +13,35 @@ debug.color = 3;
 debugVerbose.color = 2;
 debugError.color = 1;
 
-function createHsync(config) {
-  const {
+async function createHsync(config) {
+  let {
     hsyncServer,
     hsyncSecret,
     localHost,
     port,
     hsyncBase,
-    keepalive
+    keepalive,
+    dynamicHost,
   } = config;
+
+  if (dynamicHost) {
+    const options = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: '{}',
+    };
+    const resp = await fetch(`${dynamicHost}/${hsyncBase}/dyn`, options);
+    const result = await resp.json();
+    // console.log('resutl', result);
+    if (dynamicHost.toLowerCase().startsWith('https')) {
+      hsyncServer = `wss://${result.url}`;
+    } else {
+      hsyncServer = `ws://${result.url}`;
+    }
+    hsyncSecret = result.secret;
+  }
 
   const hsyncClient = {};
   hsyncClient.config = config;

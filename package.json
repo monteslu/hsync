@@ -1,8 +1,8 @@
 {
   "name": "hsync",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "client for hsync-server",
-  "main": "index.js",
+  "main": "hsync.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --inspect index.js",
@@ -19,13 +19,18 @@
     "websocket",
     "mqtt"
   ],
+  "browser": {
+    "./hsync": "./hsync-web"
+  },
   "author": "Luis Montes",
   "license": "ISC",
   "dependencies": {
     "b64id": "^1.0.0",
+    "buffer": "^6.0.3",
     "debug": "^4.3.1",
     "isomorphic-fetch": "^3.0.0",
     "mqtt": "^4.2.6",
+    "precompiled-mqtt": "^4.3.14-beta",
     "rawr": "^0.14.0"
   },
   "devDependencies": {

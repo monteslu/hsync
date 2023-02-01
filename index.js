@@ -1,8 +1,11 @@
-
-
 const config = require('./config');
-const { createHsync } = require('./connection');
+const { createConnection } = require('./hsync');
+
+const [defaultCon] = config.connections;
+if (!defaultCon.hsyncServer && !defaultCon.dynamicHost) {
+  defaultCon.dynamicHost = config.defaultDynamicHost;
+}
 
 config.connections.forEach((conConfig) => {
-  const con = createHsync(conConfig);
+  const con = createConnection(conConfig);
 });

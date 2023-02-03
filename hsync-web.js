@@ -48,9 +48,13 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
   
 }
 
-module.exports = {
+
+const hsync = globalThis.hsync || {
   createConnection: createHsync,
   dynamicConnect,
   net,
   config,
 };
+globalThis.hsync = hsync;
+
+module.exports = hsync;

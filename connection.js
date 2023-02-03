@@ -227,6 +227,7 @@ async function createHsync(config) {
     hsyncClient.webUrl = `https://${myHostName}`;
   }
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
+  hsyncClient.port = port;
 
   return hsyncClient;
 }

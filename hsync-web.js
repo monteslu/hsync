@@ -19,6 +19,8 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
       if ((Date.now() - localConfig.created) < (localConfig.timeout * 0.66)) {
         config.hsyncSecret = localConfig.hsyncSecret;
         config.hsyncServer = localConfig.hsyncServer;
+      } else {
+        localStorage.removeItem('hsyncConfig');
       }
     }
   

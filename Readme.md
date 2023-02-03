@@ -5,7 +5,6 @@
 Client for the ([hsync-server](https://github.com/monteslu/hsync-server)).
 Share your local webserver as a secure public URL, and more.
 
-
 ## basic usage
 
 clone repo
@@ -26,7 +25,4 @@ set enviroment:
 
 ### run
 `node index`
-
-
-
 

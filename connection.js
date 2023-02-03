@@ -1,26 +1,60 @@
-const mqtt = require('mqtt');
+const fetch = require('isomorphic-fetch');
 const EventEmitter = require('events').EventEmitter;
 const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
 const debugVerbose = require('debug')('hsync:verbose');
 const debugError = require('debug')('hsync:error');
 const { createRPCPeer, createServerReplyPeer } = require('./lib/rpc');
-const createWebHandler = require('./lib/web-handler');
-const createSocketListenHandler = require('./lib/socket-listen-handler');
+const { createWebHandler, setNet: webSetNet } = require('./lib/web-handler');
+const { createSocketListenHandler, setNet: listenSetNet } = require('./lib/socket-listen-handler');
 
 debug.color = 3;
 debugVerbose.color = 2;
 debugError.color = 1;
 
-function createHsync(config) {
-  const {
+let mqtt;
+
+function setNet(netImpl) {
+  webSetNet(netImpl);
+  listenSetNet(netImpl);
+}
+
+function setMqtt(mqttImpl) {
+  mqtt = mqttImpl;
+}
+
+async function createHsync(config) {
+  let {
     hsyncServer,
     hsyncSecret,
     localHost,
     port,
     hsyncBase,
-    keepalive
+    keepalive,
+    dynamicHost,
   } = config;
+
+  let dynamicTimeout;
+
+  if (dynamicHost) {
+    const options = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: '{}',
+    };
+    const resp = await fetch(`${dynamicHost}/${hsyncBase}/dyn`, options);
+    const result = await resp.json();
+    // console.log('resutl', result);
+    if (dynamicHost.toLowerCase().startsWith('https')) {
+      hsyncServer = `wss://${result.url}`;
+    } else {
+      hsyncServer = `ws://${result.url}`;
+    }
+    hsyncSecret = result.secret;
+    dynamicTimeout = result.timeout;
+  }
 
   const hsyncClient = {};
   hsyncClient.config = config;
@@ -53,7 +87,11 @@ function createHsync(config) {
   });
 
   mqConn.on('error', (error) => {
-    debugError('error on mqConn', myHostName, error);
+    debugError('error on mqConn', myHostName, error.code, error);
+    if ((error.code === 4) || (error.code === 5)) {
+      debug('ending');
+      mqConn.end();
+    }
   });
 
   mqConn.on('message', (topic, message) => {
@@ -180,10 +218,21 @@ function createHsync(config) {
   hsyncClient.serverReplyMethods = serverReplyMethods;
   hsyncClient.getPeer = getPeer;
   hsyncClient.peerMethods = peerMethods;
+  hsyncClient.hsyncSecret = hsyncSecret;
+  hsyncClient.hsyncServer = hsyncServer;
+  hsyncClient.dynamicTimeout = dynamicTimeout;
+  if (hsyncServer.toLowerCase().startsWith('wss://')) {
+    hsyncClient.webUrl = `https://${myHostName}`;
+  } else {
+    hsyncClient.webUrl = `https://${myHostName}`;
+  }
+  hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
 
   return hsyncClient;
 }
 
 module.exports = {
   createHsync,
+  setNet,
+  setMqtt,
 };

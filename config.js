@@ -1,3 +1,5 @@
+let process = global.process || {env: {}};
+
 const baseConfig = {
   hsyncServer: process.env.HSYNC_SERVER, // something like 'wss://mydevice.mydomain.com'
   hsyncSecret: process.env.HSYNC_SECRET, // keep it secret, keep it safe!

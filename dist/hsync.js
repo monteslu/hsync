@@ -13,9 +13,9 @@
 /*!*******************!*\
   !*** ./config.js ***!
   \*******************/
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-eval("const baseConfig = {\n  hsyncServer: process.env.HSYNC_SERVER, // something like 'wss://mydevice.mydomain.com'\n  hsyncSecret: process.env.HSYNC_SECRET, // keep it secret, keep it safe!\n  localHost: process.env.LOCAL_HOST || 'localhost', // host of local server\n  port: process.env.PORT || 3000, // port of local server\n  hsyncBase: process.env.HSYNC_BASE || '_hs',\n  keepalive: parseInt(process.env.HSYNC_KEEP_ALIVE) || 300,\n  dynamicHost: process.env.HSYNC_DYNAMIC_HOST,\n  defaultDynamicHost: 'https://demo.hsync.tech',\n};\n\n\nconst connections = [baseConfig];\nconst keys = Object.keys(process.env);\nkeys.forEach((k) => {\n  if(k.startsWith('HSYNC_SERVER_')) {\n    const name = k.substring(13);\n    const value = process.env[k];\n    if (name && value) {\n      connections.push({\n        name,\n        hsyncServer: value,\n        hsyncSecret: process.env['HSYNC_SECRET_' + name] || baseConfig.hsyncSecret,\n        localHost: process.env['LOCAL_HOST_' + name] || baseConfig.localHost,\n        port: process.env['PORT_' + name] || baseConfig.port,\n        hsyncBase: process.env['HSYNC_BASE_' + name] || baseConfig.hsyncBase,\n        keepalive: parseInt(process.env['HSYNC_KEEP_ALIVE_' + name]) || baseConfig.keepalive,\n        dynamicHost: process.env['HSYNC_DYNAMIC_HOST_' + name],\n      });\n    }\n  }\n})\n\nconst config = Object.assign({}, baseConfig, {connections});\n\nmodule.exports = config;\n\n//# sourceURL=webpack://hsync/./config.js?");
+eval("let process = __webpack_require__.g.process || {env: {}};\n\nconst baseConfig = {\n  hsyncServer: process.env.HSYNC_SERVER, // something like 'wss://mydevice.mydomain.com'\n  hsyncSecret: process.env.HSYNC_SECRET, // keep it secret, keep it safe!\n  localHost: process.env.LOCAL_HOST || 'localhost', // host of local server\n  port: process.env.PORT || 3000, // port of local server\n  hsyncBase: process.env.HSYNC_BASE || '_hs',\n  keepalive: parseInt(process.env.HSYNC_KEEP_ALIVE) || 300,\n  dynamicHost: process.env.HSYNC_DYNAMIC_HOST,\n  defaultDynamicHost: 'https://demo.hsync.tech',\n};\n\n\nconst connections = [baseConfig];\nconst keys = Object.keys(process.env);\nkeys.forEach((k) => {\n  if(k.startsWith('HSYNC_SERVER_')) {\n    const name = k.substring(13);\n    const value = process.env[k];\n    if (name && value) {\n      connections.push({\n        name,\n        hsyncServer: value,\n        hsyncSecret: process.env['HSYNC_SECRET_' + name] || baseConfig.hsyncSecret,\n        localHost: process.env['LOCAL_HOST_' + name] || baseConfig.localHost,\n        port: process.env['PORT_' + name] || baseConfig.port,\n        hsyncBase: process.env['HSYNC_BASE_' + name] || baseConfig.hsyncBase,\n        keepalive: parseInt(process.env['HSYNC_KEEP_ALIVE_' + name]) || baseConfig.keepalive,\n        dynamicHost: process.env['HSYNC_DYNAMIC_HOST_' + name],\n      });\n    }\n  }\n})\n\nconst config = Object.assign({}, baseConfig, {connections});\n\nmodule.exports = config;\n\n//# sourceURL=webpack://hsync/./config.js?");
 
 /***/ }),
 
@@ -342,6 +342,18 @@ eval("module.exports = JSON.parse('{\"_from\":\"net-web\",\"_id\":\"net-web@0.2.
 /******/ 				}
 /******/ 			}
 /******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */

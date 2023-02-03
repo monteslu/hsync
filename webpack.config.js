@@ -13,4 +13,7 @@ module.exports = {
     alias: {
     }
   },
+  node: {
+    global: true,
+  }
 };

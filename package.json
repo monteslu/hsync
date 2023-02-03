@@ -22,14 +22,19 @@
   "browser": {
     "./hsync": "./hsync-web"
   },
+  "bin": {
+    "hsync": "./cli.js"
+  },
   "author": "Luis Montes",
   "license": "ISC",
   "dependencies": {
     "b64id": "^1.0.0",
     "buffer": "^6.0.3",
+    "commander": "^10.0.0",
     "debug": "^4.3.1",
     "isomorphic-fetch": "^3.0.0",
     "mqtt": "^4.2.6",
+    "net-web": "^0.2.0",
     "precompiled-mqtt": "^4.3.14-beta",
     "rawr": "^0.14.0"
   },

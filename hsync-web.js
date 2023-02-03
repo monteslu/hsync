@@ -1,6 +1,6 @@
 const mqtt = require('precompiled-mqtt');
 const buffer = require('buffer');
-const net = require('./lib/web-net');
+const net = require('net-web');
 const { createHsync, setNet, setMqtt } = require('./connection');
 const config = require('./config');
 

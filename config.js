@@ -4,7 +4,7 @@ const baseConfig = {
   localHost: process.env.LOCAL_HOST || 'localhost', // host of local server
   port: process.env.PORT || 3000, // port of local server
   hsyncBase: process.env.HSYNC_BASE || '_hs',
-  keepalive: parseInt(process.env.HSYNC_KEEP_ALIVE) || 60,
+  keepalive: parseInt(process.env.HSYNC_KEEP_ALIVE) || 300,
   dynamicHost: process.env.HSYNC_DYNAMIC_HOST,
   defaultDynamicHost: 'https://demo.hsync.tech',
 };

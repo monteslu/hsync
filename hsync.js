@@ -15,8 +15,13 @@ async function dynamicConnect(dynamicHost) {
   return con;
 }
 
+function createConnection(configObj = {}) {
+  const fullConfig = {...config, ...configObj};
+  return createHsync(fullConfig);
+}
+
 module.exports = {
-  createConnection: createHsync,
+  createConnection,
   dynamicConnect,
   config,
 };

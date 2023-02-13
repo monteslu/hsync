@@ -50,9 +50,14 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
   
 }
 
+function createConnection(configObj = {}) {
+  const fullConfig = {...config, ...configObj};
+  return createHsync(fullConfig);
+}
+
 
 const hsync = globalThis.hsync || {
-  createConnection: createHsync,
+  createConnection,
   dynamicConnect,
   net,
   config,

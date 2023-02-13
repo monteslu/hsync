@@ -6,7 +6,7 @@ const debugError = require('debug')('hsync:error');
 const { getRPCPeer, createServerPeer } = require('./lib/rpc');
 const { createWebHandler, setNet: webSetNet } = require('./lib/web-handler');
 const { createSocketListenHandler, setNet: listenSetNet, receiveRelayData } = require('./lib/socket-listen-handler');
-const { createSocketRelayHandler, setNet: relaySetNet, receiveSocketData } = require('./lib/socket-relay-handler');
+const { createSocketRelayHandler, setNet: relaySetNet, receiveListenerData, connectSocket } = require('./lib/socket-relay-handler');
 const fetch = require('./lib/fetch');
 
 debug.color = 3;
@@ -40,7 +40,6 @@ async function createHsync(config) {
 
   if (dynamicHost) {
     const result = await fetch.post(`${dynamicHost}/${hsyncBase}/dyn`, {});
-    // console.log('resutl', result);
     if (dynamicHost.toLowerCase().startsWith('https')) {
       hsyncServer = `wss://${result.url}`;
     } else {
@@ -209,6 +208,7 @@ async function createHsync(config) {
     const handler = createSocketRelayHandler({port, hostName, targetPort, targetHost, hsyncClient});
     const id = b64id.generateId();
     socketRelays[id] = {handler, info: {port, hostName, targetPort, targetHost}, id};
+    debug('relay added', port);
     return getSocketRelays();
   }
 
@@ -220,16 +220,39 @@ async function createHsync(config) {
     getSocketListeners,
     getSocketRelays,
     addSocketRelay,
-    peerRpc: (fullMsg, fuller) => {
-      console.log('peerms', fullMsg, fuller);
-      return 'ok';
+    peerRpc: async (requestInfo) => {
+      requestInfo.hsyncClient = hsyncClient;
+      const { msg } = requestInfo;
+      debug('peerRpc handler', requestInfo.fromHost, msg);
+      const reply = {id: msg.id};
+      try {
+        if (!peerMethods[msg.method]) {
+          const notFoundError = new Error('method not found');
+          notFoundError.code = -32601;
+          throw notFoundError;
+        }
+        const result = await peerMethods[msg.method](requestInfo, ...msg.params);
+        reply.result = result;
+        return result;
+      } catch (e) {
+        debug('peer rpc error', e, msg);
+        msg.error = {
+          code: e.code || 500,
+          message: e.toString(),
+        };
+        return msg;
+      }
     }
   };
 
   const peerMethods = {
     ping: (host, greeting) => {
+      debug('ping called', host, greeting);
       return `${greeting} back atcha, ${host}.`;
     },
+    connectSocket,
+    receiveListenerData,
+    receiveRelayData,
   };
 
   hsyncClient.serverPeer = createServerPeer(hsyncClient, serverReplyMethods);
@@ -243,10 +266,12 @@ async function createHsync(config) {
   hsyncClient.hsyncSecret = hsyncSecret;
   hsyncClient.hsyncServer = hsyncServer;
   hsyncClient.dynamicTimeout = dynamicTimeout;
-  if (hsyncServer.toLowerCase().startsWith('wss://')) {
-    hsyncClient.webUrl = `https://${myHostName}`;
+  const { host, protocol } = new URL(hsyncServer);
+  debug('url', host, protocol);
+  if (protocol === 'wss:') {
+    hsyncClient.webUrl = `https://${host}`;
   } else {
-    hsyncClient.webUrl = `http://${myHostName}`;
+    hsyncClient.webUrl = `http://${host}`;
   }
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
   hsyncClient.webBase = `${hsyncClient.webUrl}/${hsyncBase}`;

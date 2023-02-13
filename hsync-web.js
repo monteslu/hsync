@@ -19,6 +19,8 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
       if ((Date.now() - localConfig.created) < (localConfig.timeout * 0.66)) {
         config.hsyncSecret = localConfig.hsyncSecret;
         config.hsyncServer = localConfig.hsyncServer;
+      } else {
+        localStorage.removeItem('hsyncConfig');
       }
     }
   
@@ -48,9 +50,18 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
   
 }
 
-module.exports = {
-  createConnection: createHsync,
+function createConnection(configObj = {}) {
+  const fullConfig = {...config, ...configObj};
+  return createHsync(fullConfig);
+}
+
+
+const hsync = globalThis.hsync || {
+  createConnection,
   dynamicConnect,
   net,
   config,
 };
+globalThis.hsync = hsync;
+
+module.exports = hsync;

@@ -12,22 +12,32 @@ program
   .addOption(new Option('-p, --port <number>', 'port for local webserver', 3000).env('PORT'))
   .addOption(new Option('-d, --dynamic-host <url>', 'host to get a dynamic connection from').env('HSYNC_DYNAMIC_HOST'))
   .addOption(new Option('-s, --hsync-server <url>', 'hsync-server location ex: wss://sub.mydomain.com').env('HSYNC_SERVER'))
-  .addOption(new Option('-p, --hsync-password <url>', 'password to connect to hsync-server').env('HSYNC_SECRET'));
+  .addOption(new Option('-hs, --hsync-secret <url>', 'password to connect to hsync-server').env('HSYNC_SECRET'));
 
 program.parse();
 
 const options = program.opts();
 
-console.log(options);
 
-const [defaultCon] = config.connections;
+if(options.port) {
+  options.port = Number(options.port);
+}
+
+let [defaultCon] = config.connections;
+defaultCon = {...defaultCon, ...options};
+
 if (!defaultCon.hsyncServer && !defaultCon.dynamicHost) {
   defaultCon.dynamicHost = config.defaultDynamicHost;
 }
 
+config.connections[0] = defaultCon;
+
 config.connections.forEach(async (conConfig) => {
   const con = await createConnection(conConfig);
+  console.log();
   console.log('Listening for requests on: ', con.webUrl);
+  console.log('And forwarding to: ', 'http://localhost:' + con.port);
+  console.log();
+  console.log('Admin ui at: ', con.webAdmin);
   console.log('Secret: ', con.hsyncSecret);
-  console.log('Admin instance at: ', con.webAdmin);
 });

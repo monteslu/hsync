@@ -1,12 +1,13 @@
 {
   "name": "hsync",
-  "version": "0.9.0",
+  "version": "0.14.0",
   "description": "client for hsync-server",
   "main": "hsync.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --inspect index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "webpack && BUILD_MODE=production webpack"
   },
   "repository": {
     "type": "git",
@@ -39,6 +40,8 @@
     "rawr": "^0.14.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1"
   }
 }

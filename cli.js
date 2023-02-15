@@ -40,4 +40,5 @@ config.connections.forEach(async (conConfig) => {
   console.log();
   console.log('Admin ui at: ', con.webAdmin);
   console.log('Secret: ', con.hsyncSecret);
+  console.log();
 });

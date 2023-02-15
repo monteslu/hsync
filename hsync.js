@@ -2,7 +2,10 @@ const net = require('net');
 const mqtt = require('mqtt');
 const { createHsync, setNet, setMqtt } = require('./connection');
 const config = require('./config');
+const { setRTC } = require('./lib/rtc');
+const rtc = require('./lib/rtc-node');
 
+setRTC(rtc);
 setNet(net);
 setMqtt(mqtt);
 

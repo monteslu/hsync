@@ -39,6 +39,9 @@
     "precompiled-mqtt": "^4.3.14-beta",
     "rawr": "^0.14.0"
   },
+  "optionalDependencies" : {
+    "node-datachannel": "^0.4.1"
+  },
   "devDependencies": {
     "nodemon": "^2.0.20",
     "webpack": "^5.75.0",

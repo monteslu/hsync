@@ -39,7 +39,7 @@
     "precompiled-mqtt": "^4.3.14-beta",
     "rawr": "^0.14.0"
   },
-  "optionalDependencies" : {
+  "optionalDependencies": {
     "node-datachannel": "^0.4.1"
   },
   "devDependencies": {

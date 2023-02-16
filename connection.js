@@ -3,7 +3,7 @@ const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
 const debugVerbose = require('debug')('hsync:verbose');
 const debugError = require('debug')('hsync:error');
-const { getRPCPeer, createServerPeer } = require('./lib/rpc');
+const { getRPCPeer, createServerPeer } = require('./lib/peers');
 const { createWebHandler, setNet: webSetNet } = require('./lib/web-handler');
 const { createSocketListenHandler, setNet: listenSetNet, receiveRelayData } = require('./lib/socket-listen-handler');
 const { createSocketRelayHandler, setNet: relaySetNet, receiveListenerData, connectSocket } = require('./lib/socket-relay-handler');
@@ -232,15 +232,16 @@ async function createHsync(config) {
     peerRpc: async (requestInfo) => {
       requestInfo.hsyncClient = hsyncClient;
       const { msg } = requestInfo;
-      debug('peerRpc handler', requestInfo.fromHost, msg);
+      debug('peerRpc handler', requestInfo.fromHost, msg.method);
       const reply = {id: msg.id};
       try {
-        if (!peerMethods[msg.method]) {
+        const peer = getRPCPeer({hostName: requestInfo.fromHost, hsyncClient});
+        if (!peer.localMethods[msg.method]) {
           const notFoundError = new Error('method not found');
           notFoundError.code = -32601;
           throw notFoundError;
         }
-        const result = await peerMethods[msg.method](requestInfo, ...msg.params);
+        const result = await peer.localMethods[msg.method](requestInfo, ...msg.params);
         reply.result = result;
         return result;
       } catch (e) {

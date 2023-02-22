@@ -2,7 +2,7 @@ const mqtt = require('precompiled-mqtt');
 const buffer = require('buffer');
 const net = require('net-web');
 const { createHsync, setNet, setMqtt } = require('./connection');
-const { setRTC } = require('./lib/rtc');
+const { setRTC } = require('./lib/peers');
 const rtc = require('./lib/rtc-web');
 const config = require('./config');
 

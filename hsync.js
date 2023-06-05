@@ -6,11 +6,12 @@ const config = require('./config');
 setNet(net);
 setMqtt(mqtt);
 
-async function dynamicConnect(dynamicHost) {
+async function dynamicConnect(dynamicHost, configObj = {}) {
+  const fullConfig = {...config, ...configObj};
   let con;
 
-  config.dynamicHost = dynamicHost || config.defaultDynamicHost;
-  con = await createHsync(config);
+  fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
+  con = await createHsync(fullConfig);
 
   return con;
 }

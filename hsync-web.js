@@ -10,27 +10,38 @@ window.Buffer = buffer.Buffer;
 setNet(net);
 setMqtt(mqtt);
 
-async function dynamicConnect(dynamicHost, useLocalStorage) {
+async function dynamicConnect(dynamicHost, useLocalStorage, configObj = {}) {
+  if (typeof useLocalStorage === 'object') {
+    configObj = useLocalStorage;
+  }
+  else {
+    configObj.useLocalStorage = useLocalStorage;
+  }
+
+  const fullConfig = {...config, ...configObj};
+  if (fullConfig.net) {
+    setNet(fullConfig.net);
+  }
   let con;
   if (useLocalStorage) {
     const localConfigStr = localStorage.getItem('hsyncConfig');
     if (localConfigStr) {
       const localConfig = JSON.parse(localConfigStr);
       if ((Date.now() - localConfig.created) < (localConfig.timeout * 0.66)) {
-        config.hsyncSecret = localConfig.hsyncSecret;
-        config.hsyncServer = localConfig.hsyncServer;
+        fullConfig.hsyncSecret = localConfig.hsyncSecret;
+        fullConfig.hsyncServer = localConfig.hsyncServer;
       } else {
         localStorage.removeItem('hsyncConfig');
       }
     }
   
-    if (!config.hsyncSecret) {
-      config.dynamicHost = dynamicHost || config.defaultDynamicHost;
+    if (!fullConfig.hsyncSecret) {
+      fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
     }
   
-    con = await createHsync(config);
+    con = await createHsync(fullConfig);
   
-    if (config.dynamicHost) {
+    if (fullConfig.dynamicHost) {
       const storeConfig = {
         hsyncSecret: con.hsyncSecret,
         hsyncServer: con.hsyncServer,
@@ -43,8 +54,8 @@ async function dynamicConnect(dynamicHost, useLocalStorage) {
     return con;
   }
 
-  config.dynamicHost = dynamicHost || config.defaultDynamicHost;
-  con = await createHsync(config);
+  fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
+  con = await createHsync(fullConfig);
 
   return con;
   

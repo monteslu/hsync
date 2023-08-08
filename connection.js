@@ -206,7 +206,7 @@ async function createHsync(config) {
   }
 
   function addSocketListener (port, hostName, targetPort, targetHost) {
-    console.log('addSocketListener', port, hostName, targetPort, targetHost);
+    // console.log('addSocketListener', port, hostName, targetPort, targetHost);
     const handler = createSocketListenHandler({port, hostName, targetPort, targetHost, hsyncClient});
     const id = b64id.generateId();
     socketListeners[id] = {handler, info: {port, hostName, targetPort, targetHost}, id};

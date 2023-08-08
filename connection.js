@@ -34,7 +34,15 @@ async function createHsync(config) {
     hsyncBase,
     keepalive,
     dynamicHost,
+    listenerLocalPort,
+    listenerTargetHost,
+    listenerTargetPort,
+    relayInboundPort,
+    relayTargetHost,
+    relayTargetPort,
   } = config;
+
+  // console.log('config', config);
 
   let dynamicTimeout;
 
@@ -197,7 +205,8 @@ async function createHsync(config) {
     });
   }
 
-  function addSocketListener (port, hostName, targetPort, targetHost = 'localhost') {
+  function addSocketListener (port, hostName, targetPort, targetHost) {
+    console.log('addSocketListener', port, hostName, targetPort, targetHost);
     const handler = createSocketListenHandler({port, hostName, targetPort, targetHost, hsyncClient});
     const id = b64id.generateId();
     socketListeners[id] = {handler, info: {port, hostName, targetPort, targetHost}, id};
@@ -276,6 +285,17 @@ async function createHsync(config) {
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
   hsyncClient.webBase = `${hsyncClient.webUrl}/${hsyncBase}`;
   hsyncClient.port = port;
+
+  if (listenerLocalPort) {
+    listenerLocalPort.forEach((llp, i) => {
+      const lth = listenerTargetHost ? listenerTargetHost[i] : null;
+      if (lth) {
+        const ltp = listenerTargetPort ? listenerTargetPort[i] : llp;
+        addSocketListener(llp, myHostName, ltp, lth);
+        console.log('relaying local', llp, 'to', lth, ltp);
+      }
+    });
+  }
 
   return hsyncClient;
 }

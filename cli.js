@@ -12,7 +12,13 @@ program
   .addOption(new Option('-p, --port <number>', 'port for local webserver', 3000).env('PORT'))
   .addOption(new Option('-d, --dynamic-host <url>', 'host to get a dynamic connection from').env('HSYNC_DYNAMIC_HOST'))
   .addOption(new Option('-s, --hsync-server <url>', 'hsync-server location ex: wss://sub.mydomain.com').env('HSYNC_SERVER'))
-  .addOption(new Option('-hs, --hsync-secret <url>', 'password to connect to hsync-server').env('HSYNC_SECRET'));
+  .addOption(new Option('-hs, --hsync-secret <string>', 'password to connect to hsync-server').env('HSYNC_SECRET'))
+  .addOption(new Option('-llp, --listener-local-port <number>', 'local port to open for listener').env('HSYNC_LLP'))
+  .addOption(new Option('-lth, --listener-target-host <url>', 'target host for listener').env('HSYNC_LTH'))
+  .addOption(new Option('-ltp, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP'))
+  .addOption(new Option('-rip, --relay-inbound-port <number>', 'inbound port to open for relay').env('HSYNC_RIP'))
+  .addOption(new Option('-rth, --relay-target-host <string>', 'target host for relay').env('HSYNC_RTH'))
+  .addOption(new Option('-rtp, --relay-target-port <number>', 'target port for relay').env('HSYNC_RTP'));
 
 program.parse();
 
@@ -22,6 +28,30 @@ const options = program.opts();
 if(options.port) {
   options.port = Number(options.port);
 }
+
+if(options.listenerLocalPort) {
+  options.listenerLocalPort = options.listenerLocalPort.split(',').map((p) => Number(p));
+}
+if (options.listenerTargetHost) {
+  options.listenerTargetHost = options.listenerTargetHost.split(',');
+}
+if (options.listenerTargetPort) {
+  options.listenerTargetPort = options.listenerTargetPort.split(',').map((p) => Number(p));
+}
+
+
+if (options.relayInboundPort) {
+  options.relayInboundPort = options.relayInboundPort.split(',').map((p) => Number(p));
+}
+if (options.relayTargetHost) {
+  options.relayTargetHost = options.relayTargetHost.split(',');
+}
+if (options.relayTargetPort) {
+  options.relayTargetPort = options.relayTargetPort.split(',').map((p) => Number(p));
+}
+
+// console.log('options', options);
+
 
 let [defaultCon] = config.connections;
 defaultCon = {...defaultCon, ...options};

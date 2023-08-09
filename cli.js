@@ -16,9 +16,9 @@ program
   .addOption(new Option('-llp, --listener-local-port <number>', 'local port to open for listener').env('HSYNC_LLP'))
   .addOption(new Option('-lth, --listener-target-host <url>', 'target host for listener').env('HSYNC_LTH'))
   .addOption(new Option('-ltp, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP'))
-  .addOption(new Option('-rip, --relay-inbound-port <number>', 'inbound port to open for relay').env('HSYNC_RIP'))
-  .addOption(new Option('-rth, --relay-target-host <string>', 'target host for relay').env('HSYNC_RTH'))
-  .addOption(new Option('-rtp, --relay-target-port <number>', 'target port for relay').env('HSYNC_RTP'));
+  .addOption(new Option('-rip, --relay-inbound-port <number>', 'inbound port for remote relay requests').env('HSYNC_RIP'))
+  .addOption(new Option('-rth, --relay-target-host <url>', 'target host for relay to open tcp connection on').env('HSYNC_RTH'))
+  .addOption(new Option('-rtp, --relay-target-port <number>', 'target port for relay to open tcp connection on').env('HSYNC_RTP'));
 
 program.parse();
 

@@ -297,6 +297,17 @@ async function createHsync(config) {
     });
   }
 
+  if (relayInboundPort) {
+    relayInboundPort.forEach((rip, i) => {
+      const rth = relayTargetHost ? relayTargetHost[i] : 'localhost';
+      if (rth) {
+        const rtp = relayTargetPort ? relayTargetPort[i] : rip;
+        addSocketRelay(rip, myHostName, rtp, rth);
+        console.log('relaying inbound', rip, 'to', rth, rtp);
+      }
+    });
+  }
+
   return hsyncClient;
 }
 

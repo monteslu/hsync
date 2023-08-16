@@ -288,7 +288,7 @@ async function createHsync(config) {
 
   if (listenerLocalPort) {
     listenerLocalPort.forEach((llp, i) => {
-      const lth = listenerTargetHost ? listenerTargetHost[i] : null;
+      const lth = listenerTargetHost ? listenerTargetHost[i] || listenerTargetHost[0] : null;
       if (lth) {
         const ltp = listenerTargetPort ? listenerTargetPort[i] : llp;
         addSocketListener(llp, myHostName, ltp, lth);
@@ -299,7 +299,7 @@ async function createHsync(config) {
 
   if (relayInboundPort) {
     relayInboundPort.forEach((rip, i) => {
-      const rth = relayTargetHost ? relayTargetHost[i] : 'localhost';
+      const rth = relayTargetHost ? relayTargetHost[i] : relayTargetHost[0] || 'localhost';
       if (rth) {
         const rtp = relayTargetPort ? relayTargetPort[i] : rip;
         addSocketRelay(rip, myHostName, rtp, rth);

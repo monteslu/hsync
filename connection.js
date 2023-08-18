@@ -15,6 +15,8 @@ debugError.color = 1;
 
 let mqtt;
 
+console.log('connection from hsync');
+
 function setNet(netImpl) {
   webSetNet(netImpl);
   listenSetNet(netImpl);
@@ -185,6 +187,9 @@ async function createHsync(config) {
       const peer = getRPCPeer({hostName: requestInfo.fromHost, hsyncClient});
       if (!msg.id) {
         // notification
+        if (Array.isArray(msg.params)) {
+          msg.params.unshift(peer);
+        }
         peer.transport.emit('rpc', msg);
         return { result: {}, id: msg.id};
       }
@@ -210,9 +215,9 @@ async function createHsync(config) {
   };
 
   const peerMethods = {
-    ping: (host, greeting) => {
-      debug('ping called', host, greeting);
-      return `${greeting} back atcha, ${host}.`;
+    ping: (remotePeer, greeting) => {
+      debug('ping called', remotePeer.hostName, greeting);
+      return `${greeting} back atcha, ${remotePeer.hostName}.`;
     },
     connectSocket,
     receiveListenerData,
@@ -244,11 +249,14 @@ async function createHsync(config) {
 
   if (listenerLocalPort) {
     listenerLocalPort.forEach((llp, i) => {
-      const lth = listenerTargetHost ? listenerTargetHost[i] || listenerTargetHost[0] : null;
+      let lth = listenerTargetHost ? listenerTargetHost[i] || listenerTargetHost[0] : null;
       if (lth) {
+        if (lth.endsWith('/')) {
+          lth = lth.substring(0, lth.length - 1);
+        }
         const ltp = listenerTargetPort ? listenerTargetPort[i] : llp;
         addSocketListener(llp, myHostName, ltp, lth);
-        console.log('relaying local', llp, 'to', lth, ltp);
+        debug('relaying local', llp, 'to', lth, ltp);
       }
     });
   }
@@ -257,9 +265,12 @@ async function createHsync(config) {
     relayInboundPort.forEach((rip, i) => {
       const rth = relayTargetHost ? relayTargetHost[i] : relayTargetHost[0] || 'localhost';
       if (rth) {
+        if (rth.endsWith('/')) {
+          rth = rth.substring(0, rth.length - 1);
+        }
         const rtp = relayTargetPort ? relayTargetPort[i] : rip;
         addSocketRelay(rip, myHostName, rtp, rth);
-        console.log('relaying inbound', rip, 'to', rth, rtp);
+        debug('relaying inbound', rip, 'to', rth, rtp);
       }
     });
   }

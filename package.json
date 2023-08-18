@@ -38,7 +38,7 @@
     "mqtt-packet-web": "^8.2.0",
     "net-web": "^0.2.0",
     "precompiled-mqtt": "^4.3.14-beta",
-    "rawr": "^0.14.0",
+    "rawr": "^0.15.1",
     "webpack": "^5.88.2",
     "webpack-cli": "^4.10.0"
   },

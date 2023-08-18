@@ -2,11 +2,15 @@ const mqtt = require('precompiled-mqtt');
 const buffer = require('buffer');
 const net = require('net-web');
 const { createHsync, setNet, setMqtt } = require('./connection');
+const { setRTC } = require('./lib/peers');
+const rtc = require('./lib/rtc-web');
 const config = require('./config');
+
 
 // TODO need to make this work with web/service workers
 window.Buffer = buffer.Buffer;
 
+setRTC(rtc);
 setNet(net);
 setMqtt(mqtt);
 

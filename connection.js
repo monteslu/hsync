@@ -3,7 +3,7 @@ const b64id = require('b64id');
 const debug = require('debug')('hsync:info');
 const debugVerbose = require('debug')('hsync:verbose');
 const debugError = require('debug')('hsync:error');
-const { getRPCPeer, createServerPeer } = require('./lib/rpc');
+const { getRPCPeer, createServerPeer } = require('./lib/peers');
 const { createWebHandler, setNet: webSetNet } = require('./lib/web-handler');
 const { createSocketListenHandler, setNet: listenSetNet, receiveRelayData } = require('./lib/socket-listen-handler');
 const { createSocketRelayHandler, setNet: relaySetNet, receiveListenerData, connectSocket } = require('./lib/socket-relay-handler');
@@ -14,6 +14,8 @@ debugVerbose.color = 2;
 debugError.color = 1;
 
 let mqtt;
+
+console.log('connection from hsync');
 
 function setNet(netImpl) {
   webSetNet(netImpl);
@@ -116,64 +118,13 @@ async function createHsync(config) {
         } catch (e) {
           debugError('error parsing json message');
         }
-      } else if (action === 'rpc') {
-        const peer = getRPCPeer({hostName: from, temporary: true, hsyncClient});
-        // const peer = getPeer({hostName: from, temporary: true});
-        peer.transport.receiveData(message.toString());
       }
       else if (!action && (segment3 === 'srpc')) {
         hsyncClient.serverPeer.transport.receiveData(message.toString());
       }
-      else if (action === 'socketData') {
-        // events.emit('socketData', from, segment5, message);
-        receiveSocketData(segment5, message);
-      }
-      else if (action === 'relayData') {
-        // events.emit('socketData', from, segment5, message);
-        receiveRelayData(segment5, message);
-      }
-      else if (action === 'socketClose') {
-        events.emit('socketClose', from, segment5);
-      }
     }
 
   });
-
-  // function getPeer({hostName, temporary, timeout = 10000}) {
-  //   let peer = peers[hostName];
-  //   if (!peer) {
-  //     peer = createRPCPeer({hostName, hsyncClient, timeout, methods: peerMethods});
-  //     if (temporary) {
-  //       peer.rpcTemporary = true;
-  //     }
-  //     peers[host] = peer;
-  //   }
-  //   return peer;
-  // }
-
-  function sendJson(host, json) {
-    if (!host || !json) {
-      return;
-    }
-
-    if (host === myHostName) {
-      debugError('cannot send message to self', host);
-    }
-
-    if (typeof json === 'object') {
-      json = JSON.stringify(json);
-    } else if (typeof json === 'string') {
-      try {
-        json = JSON.stringify(JSON.parse(json));
-      } catch(e) {
-        debugError('not well formed json or object', e);
-        return;
-      }
-    } else {
-      return;
-    }
-    mqConn.publish(`msg/${host}/${myHostName}/json`, json);
-  }
 
   function endClient(force, callback) {
     if (force) {
@@ -232,32 +183,41 @@ async function createHsync(config) {
     peerRpc: async (requestInfo) => {
       requestInfo.hsyncClient = hsyncClient;
       const { msg } = requestInfo;
-      debug('peerRpc handler', requestInfo.fromHost, msg);
-      const reply = {id: msg.id};
+      debug('peerRpc handler', requestInfo.fromHost, msg.method);
+      const peer = getRPCPeer({hostName: requestInfo.fromHost, hsyncClient});
+      if (!msg.id) {
+        // notification
+        if (Array.isArray(msg.params)) {
+          msg.params.unshift(peer);
+        }
+        peer.transport.emit('rpc', msg);
+        return { result: {}, id: msg.id};
+      }
+      const reply = {id: msg.id, jsonrpc:'2.0'};
       try {
-        if (!peerMethods[msg.method]) {
+        if (!peer.localMethods[msg.method]) {
           const notFoundError = new Error('method not found');
           notFoundError.code = -32601;
           throw notFoundError;
         }
-        const result = await peerMethods[msg.method](requestInfo, ...msg.params);
+        const result = await peer.localMethods[msg.method](requestInfo, ...msg.params);
         reply.result = result;
         return result;
       } catch (e) {
         debug('peer rpc error', e, msg);
-        msg.error = {
+        reply.error = {
           code: e.code || 500,
           message: e.toString(),
         };
-        return msg;
+        return reply;
       }
     }
   };
 
   const peerMethods = {
-    ping: (host, greeting) => {
-      debug('ping called', host, greeting);
-      return `${greeting} back atcha, ${host}.`;
+    ping: (remotePeer, greeting) => {
+      debug('ping called', remotePeer.hostName, greeting);
+      return `${greeting} back atcha, ${remotePeer.hostName}.`;
     },
     connectSocket,
     receiveListenerData,
@@ -265,9 +225,10 @@ async function createHsync(config) {
   };
 
   hsyncClient.serverPeer = createServerPeer(hsyncClient, serverReplyMethods);
-
+  hsyncClient.getPeer = (hostName) => {
+    return getRPCPeer({hostName, hsyncClient});
+  };
   hsyncClient.hsyncBase = hsyncBase;
-  hsyncClient.sendJson = sendJson;
   hsyncClient.endClient = endClient;
   hsyncClient.serverReplyMethods = serverReplyMethods;
   hsyncClient.getRPCPeer = getRPCPeer;
@@ -276,23 +237,26 @@ async function createHsync(config) {
   hsyncClient.hsyncServer = hsyncServer;
   hsyncClient.dynamicTimeout = dynamicTimeout;
   const { host, protocol } = new URL(hsyncServer);
-  debug('url', host, protocol);
   if (protocol === 'wss:') {
     hsyncClient.webUrl = `https://${host}`;
   } else {
     hsyncClient.webUrl = `http://${host}`;
   }
+  debug('url', host, protocol, hsyncClient.webUrl);
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
   hsyncClient.webBase = `${hsyncClient.webUrl}/${hsyncBase}`;
   hsyncClient.port = port;
 
   if (listenerLocalPort) {
     listenerLocalPort.forEach((llp, i) => {
-      const lth = listenerTargetHost ? listenerTargetHost[i] || listenerTargetHost[0] : null;
+      let lth = listenerTargetHost ? listenerTargetHost[i] || listenerTargetHost[0] : null;
       if (lth) {
+        if (lth.endsWith('/')) {
+          lth = lth.substring(0, lth.length - 1);
+        }
         const ltp = listenerTargetPort ? listenerTargetPort[i] : llp;
         addSocketListener(llp, myHostName, ltp, lth);
-        console.log('relaying local', llp, 'to', lth, ltp);
+        debug('relaying local', llp, 'to', lth, ltp);
       }
     });
   }
@@ -301,9 +265,12 @@ async function createHsync(config) {
     relayInboundPort.forEach((rip, i) => {
       const rth = relayTargetHost ? relayTargetHost[i] : relayTargetHost[0] || 'localhost';
       if (rth) {
+        if (rth.endsWith('/')) {
+          rth = rth.substring(0, rth.length - 1);
+        }
         const rtp = relayTargetPort ? relayTargetPort[i] : rip;
         addSocketRelay(rip, myHostName, rtp, rth);
-        console.log('relaying inbound', rip, 'to', rth, rtp);
+        debug('relaying inbound', rip, 'to', rth, rtp);
       }
     });
   }

@@ -6,26 +6,30 @@ hsync is a [reverse-proxy](https://en.wikipedia.org/wiki/Reverse_proxy) client f
 
 You can share your local webserver as a secure public URL, as well as tunnel whatever tcp/ip traffic you'd like between two hsync clients.
 
+## installation
 
-## basic usage
-
-## install
+### npm
 `npm i -g hsync`
 
-## add to a webpage
+### or add to a webpage
 ```
 <script src="https://cdn.jsdelivr.net/npm/hsync/dist/hsync.min.js"></script>
 ```
-
 this gives you a `hsync` global variable.
 
 
-### run
+## run
 `hsync`
 
 ## run with npx
 
 `npx hsync`
+
+## run inside of a webpage
+
+```javascript
+const hsyncCon = await hsync.dynamicConnect();
+```
 
 ## configuration
 

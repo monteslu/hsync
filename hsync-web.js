@@ -14,20 +14,14 @@ setRTC(rtc);
 setNet(net);
 setMqtt(mqtt);
 
-async function dynamicConnect(dynamicHost, useLocalStorage, configObj = {}) {
-  if (typeof useLocalStorage === 'object') {
-    configObj = useLocalStorage;
-  }
-  else {
-    configObj.useLocalStorage = useLocalStorage;
-  }
-
+async function dynamicConnect(configObj = { useLocalStorage: true }) {
   const fullConfig = {...config, ...configObj};
+  fullConfig.dynamicHost = fullConfig.dynamicHost || fullConfig.defaultDynamicHost;
   if (fullConfig.net) {
     setNet(fullConfig.net);
   }
   let con;
-  if (useLocalStorage) {
+  if (configObj.useLocalStorage) {
     const localConfigStr = localStorage.getItem('hsyncConfig');
     if (localConfigStr) {
       const localConfig = JSON.parse(localConfigStr);
@@ -39,13 +33,9 @@ async function dynamicConnect(dynamicHost, useLocalStorage, configObj = {}) {
       }
     }
   
-    if (!fullConfig.hsyncSecret) {
-      fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
-    }
-  
     con = await createHsync(fullConfig);
   
-    if (fullConfig.dynamicHost) {
+    if (!fullConfig.hsyncSecret) {
       const storeConfig = {
         hsyncSecret: con.hsyncSecret,
         hsyncServer: con.hsyncServer,
@@ -58,7 +48,6 @@ async function dynamicConnect(dynamicHost, useLocalStorage, configObj = {}) {
     return con;
   }
 
-  fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
   con = await createHsync(fullConfig);
 
   return con;

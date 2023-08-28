@@ -4,6 +4,7 @@ const { program, Option } = require('commander');
 const pack = require('./package.json');
 const config = require('./config');
 const { createConnection } = require('./hsync');
+const shell = require('./shell');
 
 program
   .name(pack.name)
@@ -18,15 +19,25 @@ program
   .addOption(new Option('-ltp, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP'))
   .addOption(new Option('-rip, --relay-inbound-port <number>', 'inbound port for remote relay requests').env('HSYNC_RIP'))
   .addOption(new Option('-rth, --relay-target-host <url>', 'target host for relay to open tcp connection on').env('HSYNC_RTH'))
-  .addOption(new Option('-rtp, --relay-target-port <number>', 'target port for relay to open tcp connection on').env('HSYNC_RTP'));
+  .addOption(new Option('-rtp, --relay-target-port <number>', 'target port for relay to open tcp connection on').env('HSYNC_RTP'))
+  .addOption(new Option('-rwl, --relay-whitelist <string>', 'whitelist of domains that can access this relay').env('HSYNC_RWL'))
+  .addOption(new Option('-rbl, --relay-blacklist <string>', 'blacklist of domains that should be blocked from this relay').env('HSYNC_RBL'))
+  .addOption(new Option('-sh, --shell', 'shell to localhost and --port for piping data to a listener'));
 
 program.parse();
 
 const options = program.opts();
 
+console.log('options', options);
+
 
 if(options.port) {
   options.port = Number(options.port);
+}
+
+if (options.shell) {
+  shell(options.port);
+  return;
 }
 
 if(options.listenerLocalPort) {

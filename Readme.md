@@ -9,8 +9,16 @@ You can share your local webserver as a secure public URL, as well as tunnel wha
 
 ## basic usage
 
-## install globally
+## install
 `npm i -g hsync`
+
+## add to a webpage
+```
+<script src="https://cdn.jsdelivr.net/npm/hsync/dist/hsync.min.js"></script>
+```
+
+this gives you a `hsync` global variable.
+
 
 ### run
 `hsync`

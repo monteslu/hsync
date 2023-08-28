@@ -1,5 +1,6 @@
 const net = require('net');
 const mqtt = require('mqtt');
+const debugError = require('debug')('errors');
 const { createHsync, setNet, setMqtt } = require('./connection');
 const config = require('./config');
 const { setRTC } = require('./lib/peers');
@@ -9,11 +10,18 @@ setRTC(rtc);
 setNet(net);
 setMqtt(mqtt);
 
-async function dynamicConnect(dynamicHost, configObj = {}) {
+process.on('unhandledRejection', (reason, p) => {
+  debugError(reason, 'Unhandled Rejection at Promise', p, reason.stack, p.stack);
+});
+process.on('uncaughtException', err => {
+  debugError(err, 'Uncaught Exception thrown', err.stack);
+});
+
+async function dynamicConnect(configObj = {}) {
   const fullConfig = {...config, ...configObj};
   let con;
 
-  fullConfig.dynamicHost = dynamicHost || fullConfig.defaultDynamicHost;
+  fullConfig.dynamicHost = fullConfig.dynamicHost || fullConfig.defaultDynamicHost;
   con = await createHsync(fullConfig);
 
   return con;

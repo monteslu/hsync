@@ -28,9 +28,6 @@ program.parse();
 
 const options = program.opts();
 
-console.log('options', options);
-
-
 if(options.port) {
   options.port = Number(options.port);
 }

@@ -202,6 +202,9 @@ async function createHsync(config) {
       debug('ping called', remotePeer.hostName, greeting);
       return `${greeting} back atcha, ${remotePeer.hostName}.`;
     },
+    validatePeer: (remotePeer, secret) => {
+      return hsyncClient.getPeer(remotePeer.hostName).myAuth === secret;
+    },
     connectSocket: hsyncClient.connectSocket,
     // closeListenerSocket: hsyncClient.closeListenerSocket,
     // closeRelaySocket: hsyncClient.closeRelaySocket,
@@ -210,6 +213,9 @@ async function createHsync(config) {
   };
 
   hsyncClient.serverPeer = hsyncClient.peers.createServerPeer(hsyncClient, serverReplyMethods);
+  hsyncClient.serverPeer.notifications.onexternal_message((msg) => {
+    hsyncClient.emit('external_message', msg);
+  });
   hsyncClient.getPeer = (hostName) => {
     return peers.getRPCPeer({ hostName });
   };

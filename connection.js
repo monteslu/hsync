@@ -67,6 +67,7 @@ async function createHsync(config) {
   const hsyncClient = {
     setNet,
     config,
+    status: 'connecting',
   };
 
   hsyncClient.peers = initPeers(hsyncClient);
@@ -75,12 +76,24 @@ async function createHsync(config) {
 
   const events = new EventEmitter();
   
-  hsyncClient.on = events.on;
-  hsyncClient.emit = events.emit;
+  hsyncClient.on = events.on.bind(events);
+  hsyncClient.emit = events.emit.bind(events);
+  hsyncClient.removeListener = events.removeListener.bind(events);
+  hsyncClient.removeAllListeners = events.removeAllListeners.bind(events);
   
   let lastConnect;
-  const connectURL = `${hsyncServer}${hsyncServer.endsWith('/') ? '' : '/'}${hsyncBase}`;
-  const myHostName = (new URL(connectURL)).hostname;
+  const hsu = new URL(hsyncServer.toLowerCase());
+  // console.log(hsu);
+  let protocol = hsu.protocol;
+  if (hsu.protocol === 'https:') {
+    protocol = 'wss:';
+  } else if (hsu.protocol === 'http:') {
+    protocol = 'ws:';
+  }
+  const connectURL = `${protocol}//${hsu.hostname}${hsu.port ? `:${hsu.port}` : ''}/${hsyncBase}`;
+  // const connectURL = `${hsyncServer}${hsyncServer.endsWith('/') ? '' : '/'}${hsyncBase}`;
+  // console.log('connectURL', connectURL);
+  const myHostName = hsu.hostname;
   hsyncClient.myHostName = myHostName;
   
   debug('connecting to', connectURL, '…' );
@@ -96,6 +109,7 @@ async function createHsync(config) {
     debug('connected to', myHostName, lastConnect ? (now - lastConnect) : '', lastConnect ? 'since last connect' : '');
     lastConnect = now;
     hsyncClient.emit('connected', config);
+    hsyncClient.status = 'connected';
   });
 
   mqConn.on('error', (error) => {
@@ -103,9 +117,10 @@ async function createHsync(config) {
     if ((error.code === 4) || (error.code === 5)) {
       debug('ending');
       mqConn.end();
-      if (globalThis.process) {
-        process.exit(1);
-      }
+      // if (globalThis.process) {
+      //   process.exit(1);
+      // }
+      hsyncClient.emit('connect_error', error);
     }
   });
 
@@ -140,12 +155,14 @@ async function createHsync(config) {
   function endClient(force, callback) {
     if (force) {
       mqConn.end(force);
+      hsyncClient.status = 'disconnected';
       if (webHandler.end) {
         webHandler.end();
       }
       return;
     }
     mqConn.end(force, (a, b) => {
+      hsyncClient.status = 'disconnected';
       if (webHandler.end) {
         webHandler.end();
       }
@@ -217,7 +234,7 @@ async function createHsync(config) {
     hsyncClient.emit('external_message', msg);
   });
   hsyncClient.getPeer = (hostName) => {
-    return peers.getRPCPeer({ hostName });
+    return hsyncClient.peers.getRPCPeer({ hostName });
   };
   hsyncClient.hsyncBase = hsyncBase;
   hsyncClient.endClient = endClient;
@@ -227,13 +244,16 @@ async function createHsync(config) {
   hsyncClient.hsyncSecret = hsyncSecret;
   hsyncClient.hsyncServer = hsyncServer;
   hsyncClient.dynamicTimeout = dynamicTimeout;
-  const { host, protocol } = new URL(hsyncServer);
-  if (protocol === 'wss:') {
-    hsyncClient.webUrl = `https://${host}`;
+  // const { host, protocol } = new URL(hsyncServer);
+  if (hsu.protocol === 'wss:') {
+    hsyncClient.webUrl = `https://${hsu.host}`;
+  } else if (hsu.protocol === 'ws:') {
+    hsyncClient.webUrl = `http://${hsu.host}`;
   } else {
-    hsyncClient.webUrl = `http://${host}`;
+    hsyncClient.webUrl = hsyncServer;
   }
-  debug('url', host, protocol, hsyncClient.webUrl);
+  
+  debug('URL', hsu.host, hsu.protocol, hsyncClient.webUrl);
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
   hsyncClient.webBase = `${hsyncClient.webUrl}/${hsyncBase}`;
   hsyncClient.port = port;

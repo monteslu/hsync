@@ -41,7 +41,7 @@ However you can pass flags to the command line or configure env variables:
 | ---- | ---------------------  | ------- | ------------------ | ---------------------------------------------------------- |
 | -p   | -port                  | number  | PORT               | port for local webserver                                   |  
 | -d   | --dynamic-host         | url     | HSYNC_DYNAMIC_HOST | host to get a dynamic connection from                      |
-| -s   | --hsync-server         | url     | HSYNC_SERVER       | hsync-server location ex: wss://sub.mydomain.com           |
+| -s   | --hsync-server         | url     | HSYNC_SERVER       | hsync-server location ex: https://sub.mydomain.com           |
 | -hs  | --hsync-secret         | string  | HSYNC_SECRET       | password to connect to hsync-server                        |
 | -llp | --listener-local-port  | number  | HSYNC_LLP          | local port to open for listener                            |
 | -lth | --listener-target-host | url     | HSYNC_LTH          | target host for listener                                   |

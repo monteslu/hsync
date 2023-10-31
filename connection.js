@@ -20,8 +20,6 @@ debugError.color = 1;
 
 let mqtt;
 
-console.log('connection from hsync');
-
 function setNet(netImpl) {
   webSetNet(netImpl);
   listenSetNet(netImpl);
@@ -185,6 +183,7 @@ async function createHsync(config) {
       const { msg } = requestInfo;
       debug('peerRpc handler', requestInfo.fromHost, msg.method);
       const peer = hsyncClient.peers.getRPCPeer({hostName: requestInfo.fromHost, hsyncClient});
+      requestInfo.peer = peer;
       if (!msg.id) {
         // notification
         if (Array.isArray(msg.params)) {

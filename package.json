@@ -1,6 +1,6 @@
 {
   "name": "hsync",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "client for hsync-server",
   "main": "hsync.js",
   "scripts": {
@@ -18,7 +18,11 @@
     "json-rpc",
     "ngrok",
     "websocket",
-    "mqtt"
+    "mqtt",
+    "proxy",
+    "reverse-proxy",
+    "vpn",
+    "tunnel"
   ],
   "browser": {
     "./hsync": "./hsync-web"

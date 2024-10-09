@@ -275,7 +275,7 @@ async function createHsync(config) {
     relayInboundPort.forEach((rip, i) => {
       debug('relayInboundPort', rip, i, relayTargetHost);
       const firstRth = relayTargetHost ? relayTargetHost[0] : null;
-      const rth = relayTargetHost ? relayTargetHost[i] : firstRth || 'localhost';
+      let rth = relayTargetHost ? relayTargetHost[i] : firstRth || 'localhost';
       if (rth) {
         if (rth.endsWith('/')) {
           rth = rth.substring(0, rth.length - 1);

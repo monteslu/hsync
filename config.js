@@ -1,33 +1,35 @@
-let process = global.process || {env: {}};
+const p = globalThis.process || {env: {}};
+const { env } = p;
 
 const baseConfig = {
-  hsyncServer: process.env.HSYNC_SERVER, // something like 'wss://mydevice.mydomain.com'
-  hsyncSecret: process.env.HSYNC_SECRET, // keep it secret, keep it safe!
-  localHost: process.env.LOCAL_HOST || 'localhost', // host of local server
-  port: process.env.PORT || 3000, // port of local server
-  hsyncBase: process.env.HSYNC_BASE || '_hs',
-  keepalive: parseInt(process.env.HSYNC_KEEP_ALIVE) || 300,
-  dynamicHost: process.env.HSYNC_DYNAMIC_HOST,
+  hsyncServer: env.HSYNC_SERVER, // something like 'wss://mydevice.mydomain.com'
+  hsyncSecret: env.HSYNC_SECRET, // keep it secret, keep it safe!
+  localHost: env.LOCAL_HOST || 'localhost', // host of local server
+  port: env.PORT || 3000, // port of local server
+  hsyncBase: env.HSYNC_BASE || '_hs',
+  keepalive: parseInt(env.HSYNC_KEEP_ALIVE) || 300,
+  dynamicHost: env.HSYNC_DYNAMIC_HOST,
   defaultDynamicHost: 'https://demo.hsync.tech',
+  another: 'another',
 };
 
 
 const connections = [baseConfig];
-const keys = Object.keys(process.env);
+const keys = Object.keys(env);
 keys.forEach((k) => {
   if(k.startsWith('HSYNC_SERVER_')) {
     const name = k.substring(13);
-    const value = process.env[k];
+    const value = env[k];
     if (name && value) {
       connections.push({
         name,
         hsyncServer: value,
-        hsyncSecret: process.env['HSYNC_SECRET_' + name] || baseConfig.hsyncSecret,
-        localHost: process.env['LOCAL_HOST_' + name] || baseConfig.localHost,
-        port: process.env['PORT_' + name] || baseConfig.port,
-        hsyncBase: process.env['HSYNC_BASE_' + name] || baseConfig.hsyncBase,
-        keepalive: parseInt(process.env['HSYNC_KEEP_ALIVE_' + name]) || baseConfig.keepalive,
-        dynamicHost: process.env['HSYNC_DYNAMIC_HOST_' + name],
+        hsyncSecret: env['HSYNC_SECRET_' + name] || baseConfig.hsyncSecret,
+        localHost: env['LOCAL_HOST_' + name] || baseConfig.localHost,
+        port: env['PORT_' + name] || baseConfig.port,
+        hsyncBase: env['HSYNC_BASE_' + name] || baseConfig.hsyncBase,
+        keepalive: parseInt(env['HSYNC_KEEP_ALIVE_' + name]) || baseConfig.keepalive,
+        dynamicHost: env['HSYNC_DYNAMIC_HOST_' + name],
       });
     }
   }

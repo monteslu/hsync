@@ -1,7 +1,7 @@
-const net = require('net');
+import net from 'net';
 
-function run(port = 2323) {
-  process.stdin.setRawMode( true );
+export default function run(port = 2323) {
+  process.stdin.setRawMode(true);
   console.log('connecting to localhost:', port, ' ...');
 
   const client = net.createConnection({ port }, () => {
@@ -12,7 +12,7 @@ function run(port = 2323) {
     process.stdin.on('data', (data) => {
       client.write(data);
       // ctrl-c ( end of text )
-      if ( String(data) === '\u0003' ) {
+      if (String(data) === '\u0003') {
         process.exit();
       }
     });
@@ -25,9 +25,5 @@ function run(port = 2323) {
     client.on('error', (err) => {
       console.error(err);
     });
-    
   });
 }
-
-module.exports = run;
-

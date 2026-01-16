@@ -1,18 +1,14 @@
-const EventEmitter = require('events').EventEmitter;
-const debug = require('debug')('hsync:info');
-const debugVerbose = require('debug')('hsync:verbose');
-const debugError = require('debug')('hsync:error');
-const { initPeers } = require('./lib/peers');
-const { createWebHandler, setNet: webSetNet } = require('./lib/web-handler');
-const { 
-  setNet: listenSetNet,
-  initListeners,
-} = require('./lib/socket-listeners');
-const {
-  setNet: relaySetNet,
-  initRelays,
-} = require('./lib/socket-relays');
-const fetch = require('./lib/fetch');
+import { EventEmitter } from 'events';
+import createDebug from 'debug';
+import { initPeers } from './lib/peers.js';
+import { createWebHandler, setNet as webSetNet } from './lib/web-handler.js';
+import { setNet as listenSetNet, initListeners } from './lib/socket-listeners.js';
+import { setNet as relaySetNet, initRelays } from './lib/socket-relays.js';
+import fetch from './lib/fetch.js';
+
+const debug = createDebug('hsync:info');
+const debugVerbose = createDebug('hsync:verbose');
+const debugError = createDebug('hsync:error');
 
 debug.color = 3;
 debugVerbose.color = 2;
@@ -20,25 +16,22 @@ debugError.color = 1;
 
 let mqtt;
 
-function setNet(netImpl) {
+export function setNet(netImpl) {
   webSetNet(netImpl);
   listenSetNet(netImpl);
   relaySetNet(netImpl);
 }
 
-function setMqtt(mqttImpl) {
+export function setMqtt(mqttImpl) {
   mqtt = mqttImpl;
 }
 
-async function createHsync(config) {
-  let {
-    hsyncServer,
-    hsyncSecret,
+export async function createHsync(config) {
+  const {
     localHost,
     port,
     hsyncBase,
     keepalive,
-    dynamicHost,
     listenerLocalPort,
     listenerTargetHost,
     listenerTargetPort,
@@ -46,6 +39,8 @@ async function createHsync(config) {
     relayTargetHost,
     relayTargetPort,
   } = config;
+  const { dynamicHost } = config;
+  let { hsyncServer, hsyncSecret } = config;
 
   // console.log('config', config);
 
@@ -73,12 +68,12 @@ async function createHsync(config) {
   hsyncClient.relays = initRelays(hsyncClient);
 
   const events = new EventEmitter();
-  
+
   hsyncClient.on = events.on.bind(events);
   hsyncClient.emit = events.emit.bind(events);
   hsyncClient.removeListener = events.removeListener.bind(events);
   hsyncClient.removeAllListeners = events.removeAllListeners.bind(events);
-  
+
   let lastConnect;
   const hsu = new URL(hsyncServer.toLowerCase());
   // console.log(hsu);
@@ -93,18 +88,27 @@ async function createHsync(config) {
   // console.log('connectURL', connectURL);
   const myHostName = hsu.hostname;
   hsyncClient.myHostName = myHostName;
-  
-  debug('connecting to', connectURL, '…' );
-  const mqConn = mqtt.connect(connectURL, { password: hsyncSecret, username: myHostName, keepalive });
+
+  debug('connecting to', connectURL, '…');
+  const mqConn = mqtt.connect(connectURL, {
+    password: hsyncSecret,
+    username: myHostName,
+    keepalive,
+  });
   mqConn.myHostName = myHostName;
   hsyncClient.mqConn = mqConn;
 
-  const webHandler = config.webHandler || createWebHandler({myHostName, localHost, port, mqConn});
+  const webHandler = config.webHandler || createWebHandler({ myHostName, localHost, port, mqConn });
   hsyncClient.webHandler = webHandler;
 
   mqConn.on('connect', () => {
     const now = Date.now();
-    debug('connected to', myHostName, lastConnect ? (now - lastConnect) : '', lastConnect ? 'since last connect' : '');
+    debug(
+      'connected to',
+      myHostName,
+      lastConnect ? now - lastConnect : '',
+      lastConnect ? 'since last connect' : ''
+    );
     lastConnect = now;
     hsyncClient.emit('connected', config);
     hsyncClient.status = 'connected';
@@ -112,7 +116,7 @@ async function createHsync(config) {
 
   mqConn.on('error', (error) => {
     debugError('error on mqConn', myHostName, error.code, error);
-    if ((error.code === 4) || (error.code === 5)) {
+    if (error.code === 4 || error.code === 5) {
       debug('ending');
       mqConn.end();
       // if (globalThis.process) {
@@ -127,8 +131,8 @@ async function createHsync(config) {
       return;
     }
     // message is Buffer
-    const [name, hostName, segment3, action, segment5] = topic.split('/');
-    debugVerbose('\n↓ MQTT' , topic);
+    const [name, hostName, segment3, action, _segment5] = topic.split('/');
+    debugVerbose('\n↓ MQTT', topic);
     if (name === 'web') {
       webHandler.handleWebRequest(hostName, segment3, action, message);
       return;
@@ -139,15 +143,13 @@ async function createHsync(config) {
           const msg = JSON.parse(message.toString());
           msg.from = from;
           hsyncClient.emit('json', msg);
-        } catch (e) {
+        } catch (_e) {
           debugError('error parsing json message');
         }
-      }
-      else if (!action && (segment3 === 'srpc')) {
+      } else if (!action && segment3 === 'srpc') {
         hsyncClient.serverPeer.transport.receiveData(message.toString());
       }
     }
-
   });
 
   function endClient(force, callback) {
@@ -167,7 +169,7 @@ async function createHsync(config) {
       if (callback) {
         callback(a, b);
       }
-    })
+    });
   }
 
   const serverReplyMethods = {
@@ -182,7 +184,7 @@ async function createHsync(config) {
       requestInfo.hsyncClient = hsyncClient;
       const { msg } = requestInfo;
       debug('peerRpc handler', requestInfo.fromHost, msg.method);
-      const peer = hsyncClient.peers.getRPCPeer({hostName: requestInfo.fromHost, hsyncClient});
+      const peer = hsyncClient.peers.getRPCPeer({ hostName: requestInfo.fromHost, hsyncClient });
       requestInfo.peer = peer;
       if (!msg.id) {
         // notification
@@ -190,9 +192,9 @@ async function createHsync(config) {
           msg.params.unshift(peer);
         }
         peer.transport.emit('rpc', msg);
-        return { result: {}, id: msg.id};
+        return { result: {}, id: msg.id };
       }
-      const reply = {id: msg.id, jsonrpc:'2.0'};
+      const reply = { id: msg.id, jsonrpc: '2.0' };
       try {
         if (!peer.localMethods[msg.method]) {
           const notFoundError = new Error('method not found');
@@ -210,7 +212,7 @@ async function createHsync(config) {
         };
         return reply;
       }
-    }
+    },
   };
 
   const peerMethods = {
@@ -251,7 +253,7 @@ async function createHsync(config) {
   } else {
     hsyncClient.webUrl = hsyncServer;
   }
-  
+
   debug('URL', hsu.host, hsu.protocol, hsyncClient.webUrl);
   hsyncClient.webAdmin = `${hsyncClient.webUrl}/${hsyncBase}/admin`;
   hsyncClient.webBase = `${hsyncClient.webUrl}/${hsyncBase}`;
@@ -289,9 +291,3 @@ async function createHsync(config) {
 
   return hsyncClient;
 }
-
-module.exports = {
-  createHsync,
-  setNet,
-  setMqtt,
-};

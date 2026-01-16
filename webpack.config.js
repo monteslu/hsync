@@ -29,4 +29,7 @@ export default {
   node: {
     global: true,
   },
+  performance: {
+    hints: false,
+  },
 };

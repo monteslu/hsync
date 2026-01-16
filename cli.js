@@ -26,52 +26,52 @@ program
     )
   )
   .addOption(
-    new Option('-hs, --hsync-secret <string>', 'password to connect to hsync-server').env(
+    new Option('-S, --hsync-secret <string>', 'password to connect to hsync-server').env(
       'HSYNC_SECRET'
     )
   )
   .addOption(
-    new Option('-llp, --listener-local-port <number>', 'local port to open for listener').env(
+    new Option('-L, --listener-local-port <number>', 'local port to open for listener').env(
       'HSYNC_LLP'
     )
   )
   .addOption(
-    new Option('-lth, --listener-target-host <url>', 'target host for listener').env('HSYNC_LTH')
+    new Option('-H, --listener-target-host <url>', 'target host for listener').env('HSYNC_LTH')
   )
   .addOption(
-    new Option('-ltp, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP')
+    new Option('-T, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP')
   )
   .addOption(
-    new Option('-rip, --relay-inbound-port <number>', 'inbound port for remote relay requests').env(
+    new Option('-R, --relay-inbound-port <number>', 'inbound port for remote relay requests').env(
       'HSYNC_RIP'
     )
   )
   .addOption(
     new Option(
-      '-rth, --relay-target-host <url>',
+      '-t, --relay-target-host <url>',
       'target host for relay to open tcp connection on'
     ).env('HSYNC_RTH')
   )
   .addOption(
     new Option(
-      '-rtp, --relay-target-port <number>',
+      '-P, --relay-target-port <number>',
       'target port for relay to open tcp connection on'
     ).env('HSYNC_RTP')
   )
   .addOption(
     new Option(
-      '-rwl, --relay-whitelist <string>',
+      '-w, --relay-whitelist <string>',
       'whitelist of domains that can access this relay'
     ).env('HSYNC_RWL')
   )
   .addOption(
     new Option(
-      '-rbl, --relay-blacklist <string>',
+      '-b, --relay-blacklist <string>',
       'blacklist of domains that should be blocked from this relay'
     ).env('HSYNC_RBL')
   )
   .addOption(
-    new Option('-sh, --shell', 'shell to localhost and --port for piping data to a listener')
+    new Option('-x, --shell', 'shell to localhost and --port for piping data to a listener')
   );
 
 program.parse();

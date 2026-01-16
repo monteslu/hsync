@@ -1,6 +1,6 @@
 {
   "name": "hsync",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "type": "module",
   "description": "client for hsync-server",
   "main": "./hsync.js",

@@ -1,5 +1,6 @@
 # hsync
 
+[![CI](https://github.com/monteslu/hsync/actions/workflows/ci.yml/badge.svg)](https://github.com/monteslu/hsync/actions/workflows/ci.yml)
 [![NPM](https://nodei.co/npm/hsync.svg)](https://nodei.co/npm/hsync/)
 
 hsync is a [reverse-proxy](https://en.wikipedia.org/wiki/Reverse_proxy) client for node.js and browsers that connects to an [hsync-server](https://github.com/monteslu/hsync-server).

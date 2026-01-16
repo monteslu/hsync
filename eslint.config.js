@@ -13,7 +13,10 @@ export default [
       globals: { ...globals.node, ...globals.browser },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',

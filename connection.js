@@ -131,7 +131,7 @@ export async function createHsync(config) {
       return;
     }
     // message is Buffer
-    const [name, hostName, segment3, action, _segment5] = topic.split('/');
+    const [name, hostName, segment3, action] = topic.split('/');
     debugVerbose('\n↓ MQTT', topic);
     if (name === 'web') {
       webHandler.handleWebRequest(hostName, segment3, action, message);

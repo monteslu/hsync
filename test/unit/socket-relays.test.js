@@ -295,7 +295,7 @@ describe('socket-relays', () => {
       });
 
       // Make connect call the error handler instead
-      mockSocket.connect = vi.fn((port, host, cb) => {
+      mockSocket.connect = vi.fn((_port, _host, _cb) => {
         // Don't call success callback
       });
 

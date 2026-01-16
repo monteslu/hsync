@@ -1,5 +1,5 @@
-const config = require('./config');
-const { createConnection } = require('./hsync');
+import config from './config.js';
+import { createConnection } from './hsync.js';
 
 const [defaultCon] = config.connections;
 if (!defaultCon.hsyncServer && !defaultCon.dynamicHost) {
@@ -7,5 +7,5 @@ if (!defaultCon.hsyncServer && !defaultCon.dynamicHost) {
 }
 
 config.connections.forEach((conConfig) => {
-  const con = createConnection(conConfig);
+  createConnection(conConfig);
 });

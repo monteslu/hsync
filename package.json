@@ -1,13 +1,49 @@
 {
   "name": "hsync",
-  "version": "0.30.2",
+  "version": "0.31.0",
+  "type": "module",
   "description": "client for hsync-server",
-  "main": "hsync.js",
+  "main": "./hsync.js",
+  "exports": {
+    ".": {
+      "browser": {
+        "import": "./hsync-web.js"
+      },
+      "node": {
+        "import": "./hsync.js"
+      },
+      "default": "./hsync.js"
+    },
+    "./web": {
+      "import": "./hsync-web.js"
+    },
+    "./node": {
+      "import": "./hsync.js"
+    },
+    "./config": {
+      "import": "./config.js"
+    },
+    "./connection": {
+      "import": "./connection.js"
+    }
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "dev": "nodemon --inspect index.js",
     "start": "node index.js",
-    "build": "webpack && BUILD_MODE=production webpack"
+    "build": "webpack && BUILD_MODE=production webpack",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.js\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -25,7 +61,7 @@
     "tunnel"
   ],
   "browser": {
-    "./hsync": "./hsync-web"
+    "./hsync.js": "./hsync-web.js"
   },
   "bin": {
     "hsync": "./cli.js",
@@ -34,23 +70,30 @@
   "author": "Luis Montes",
   "license": "ISC",
   "dependencies": {
-    "b64id": "^1.0.0",
+    "b64id": "^1.1.1",
     "buffer": "^6.0.3",
-    "commander": "^10.0.0",
-    "debug": "^4.3.1",
-    "isomorphic-fetch": "^3.0.0",
-    "mqtt": "^4.2.6",
-    "mqtt-packet-web": "^8.2.0",
-    "net-web": "^0.2.0",
-    "precompiled-mqtt": "^4.3.14-beta",
-    "rawr": "^0.15.1"
+    "commander": "^14.0.2",
+    "debug": "^4.4.3",
+    "mqtt": "^5.14.1",
+    "mqtt-packet": "^9.0.2",
+    "net-web": "^0.3.0",
+    "rawr": "^0.19.0"
   },
   "optionalDependencies": {
-    "node-datachannel": "^0.23.0"
+    "node-datachannel": "^0.32.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^4.10.0"
+    "@eslint/js": "^9.39.2",
+    "@vitest/coverage-v8": "^4.0.17",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.0",
+    "vitest": "^4.0.17",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1"
   }
 }

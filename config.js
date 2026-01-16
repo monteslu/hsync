@@ -1,4 +1,4 @@
-const p = globalThis.process || {env: {}};
+const p = globalThis.process || { env: {} };
 const { env } = p;
 
 const baseConfig = {
@@ -13,11 +13,10 @@ const baseConfig = {
   another: 'another',
 };
 
-
 const connections = [baseConfig];
 const keys = Object.keys(env);
 keys.forEach((k) => {
-  if(k.startsWith('HSYNC_SERVER_')) {
+  if (k.startsWith('HSYNC_SERVER_')) {
     const name = k.substring(13);
     const value = env[k];
     if (name && value) {
@@ -33,8 +32,9 @@ keys.forEach((k) => {
       });
     }
   }
-})
+});
 
-const config = Object.assign({}, baseConfig, {connections});
+const config = Object.assign({}, baseConfig, { connections });
 
-module.exports = config;
+export default config;
+export { baseConfig, connections };

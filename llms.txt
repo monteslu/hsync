@@ -1,0 +1,128 @@
+# hsync
+
+> Reverse-proxy and TCP tunnel client for Node.js AND browsers. Share local servers as public URLs, tunnel arbitrary TCP between clients via WebSocket. Works in-browser too.
+
+## What It Does
+
+1. **Public URLs for local servers** - Like ngrok but self-hosted
+2. **TCP tunneling** - Forward any TCP port between two hsync clients
+3. **Browser support** - Works in browsers via WebSocket, not just Node.js
+4. **MQTT integration** - Pub/sub messaging between connected clients
+
+## Installation
+
+```bash
+npm install -g hsync
+```
+
+Or use in browser:
+```html
+<script src="https://cdn.jsdelivr.net/npm/hsync/dist/hsync.min.js"></script>
+```
+
+## Quick Start
+
+### Share a local webserver
+
+```bash
+# Share localhost:3000 as a public URL
+hsync -p 3000
+```
+
+### Programmatic usage (Node.js)
+
+```javascript
+import { hsync } from 'hsync';
+
+const connection = await hsync({
+  server: 'wss://your-hsync-server.com/_hs',
+  secret: 'your-secret',
+  name: 'myapp',
+  local: 'http://localhost:3000'
+});
+
+console.log('Public URL:', connection.publicUrl);
+```
+
+### Browser usage
+
+```javascript
+const connection = await hsync.dynamicConnect();
+// Get a temporary public URL without config
+```
+
+## Configuration
+
+| Flag | Env Variable | Description |
+|------|-------------|-------------|
+| `-p, --port` | `PORT` | Local webserver port |
+| `-s, --hsync-server` | `HSYNC_SERVER` | Server URL (wss://...) |
+| `-hs, --hsync-secret` | `HSYNC_SECRET` | Authentication secret |
+| `-d, --dynamic-host` | `HSYNC_DYNAMIC_HOST` | Get temp URL without secret |
+
+### TCP Tunneling
+
+```bash
+# Listen locally on port 2222, forward to remote host:22
+hsync --listener-local-port 2222 --listener-target-host remote.server.com --listener-target-port 22
+```
+
+### Relay mode (remote → local)
+
+```bash
+# Accept connections on server port 8080, forward to local port 3000
+hsync --relay-inbound-port 8080 --relay-target-host localhost --relay-target-port 3000
+```
+
+## Key Exports
+
+```javascript
+import { hsync } from 'hsync';           // Main connection function
+import { hsync } from 'hsync/web';        // Browser-specific (smaller)
+import { hsync } from 'hsync/node';       // Node.js-specific
+import { getConfig } from 'hsync/config'; // Configuration utilities
+```
+
+## Architecture
+
+```
+                    ┌─────────────────┐
+                    │  hsync-server   │
+                    │  (public URL)   │
+                    └────────┬────────┘
+                             │ WebSocket
+           ┌─────────────────┼─────────────────┐
+           │                 │                 │
+    ┌──────▼──────┐   ┌──────▼──────┐   ┌──────▼──────┐
+    │ hsync (Node)│   │hsync (Browser)│  │ hsync (Node)│
+    │ localhost:X │   │    Web App    │  │ localhost:Y │
+    └─────────────┘   └───────────────┘  └─────────────┘
+```
+
+## Use Cases
+
+1. **Development** - Share local dev server with teammates
+2. **IoT** - Connect devices behind NAT without port forwarding
+3. **Browser P2P** - Connect browsers via WebSocket relay
+4. **Remote access** - SSH through firewall via TCP tunnel
+5. **Webhooks** - Receive webhooks on local machine
+
+## File Structure
+
+| File | Purpose |
+|------|---------|
+| `hsync.js` | Node.js client implementation |
+| `hsync-web.js` | Browser client (WebSocket only) |
+| `cli.js` | Command-line interface |
+| `connection.js` | Connection management |
+| `config.js` | Configuration handling |
+| `lib/` | Internal utilities |
+
+## Related Projects
+
+- [hsync-server](https://github.com/monteslu/hsync-server) - The server component
+- [rawr](https://github.com/iceddev/rawr) - JSON-RPC over any transport (used internally)
+
+## License
+
+ISC

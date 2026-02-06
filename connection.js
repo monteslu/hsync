@@ -4,6 +4,7 @@ import { initPeers } from './lib/peers.js';
 import { createWebHandler, setNet as webSetNet } from './lib/web-handler.js';
 import { setNet as listenSetNet, initListeners } from './lib/socket-listeners.js';
 import { setNet as relaySetNet, initRelays } from './lib/socket-relays.js';
+import { setDgram, initUdpRelays } from './lib/udp-relays.js';
 import fetch from './lib/fetch.js';
 
 const debug = createDebug('hsync:info');
@@ -21,6 +22,8 @@ export function setNet(netImpl) {
   listenSetNet(netImpl);
   relaySetNet(netImpl);
 }
+
+export { setDgram };
 
 export function setMqtt(mqttImpl) {
   mqtt = mqttImpl;
@@ -66,6 +69,7 @@ export async function createHsync(config) {
   hsyncClient.peers = initPeers(hsyncClient);
   hsyncClient.listeners = initListeners(hsyncClient);
   hsyncClient.relays = initRelays(hsyncClient);
+  hsyncClient.udpRelays = initUdpRelays(hsyncClient);
 
   const events = new EventEmitter();
 

@@ -1,7 +1,8 @@
 import net from 'net';
+import dgram from 'dgram';
 import mqtt from 'mqtt';
 import createDebug from 'debug';
-import { createHsync, setNet, setMqtt } from './connection.js';
+import { createHsync, setNet, setMqtt, setDgram } from './connection.js';
 import config from './config.js';
 import { setRTC } from './lib/peers.js';
 import rtc from './lib/rtc-node.js';
@@ -10,6 +11,7 @@ const debugError = createDebug('errors');
 
 setRTC(rtc);
 setNet(net);
+setDgram(dgram);
 setMqtt(mqtt);
 
 process.on('unhandledRejection', (reason, p) => {

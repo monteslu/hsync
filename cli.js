@@ -42,6 +42,11 @@ program
     new Option('-T, --listener-target-port <number>', 'target port for listener').env('HSYNC_LTP')
   )
   .addOption(
+    new Option('--listener-password <string>', 'password for connecting to relay').env(
+      'HSYNC_LPWD'
+    )
+  )
+  .addOption(
     new Option('-R, --relay-inbound-port <number>', 'inbound port for remote relay requests').env(
       'HSYNC_RIP'
     )
@@ -71,6 +76,11 @@ program
     ).env('HSYNC_RBL')
   )
   .addOption(
+    new Option('--relay-password <string>', 'password required to connect to this relay').env(
+      'HSYNC_RPWD'
+    )
+  )
+  .addOption(
     new Option('-x, --shell', 'shell to localhost and --port for piping data to a listener')
   );
 
@@ -94,6 +104,9 @@ if (options.shell) {
   if (options.listenerTargetPort) {
     options.listenerTargetPort = options.listenerTargetPort.split(',').map((p) => Number(p));
   }
+  if (options.listenerPassword) {
+    options.listenerPassword = options.listenerPassword.split(',');
+  }
 
   if (options.relayInboundPort) {
     options.relayInboundPort = options.relayInboundPort.split(',').map((p) => Number(p));
@@ -103,6 +116,9 @@ if (options.shell) {
   }
   if (options.relayTargetPort) {
     options.relayTargetPort = options.relayTargetPort.split(',').map((p) => Number(p));
+  }
+  if (options.relayPassword) {
+    options.relayPassword = options.relayPassword.split(',');
   }
 
   // console.log('options', options);

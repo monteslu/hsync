@@ -271,5 +271,84 @@ describe('peers', () => {
       expect(peer.dcOpen).toBe(false);
       expect(peer.packAndSend).toBeUndefined();
     });
+
+    describe('JSON parsing security (CVE-HSYNC-2026-005)', () => {
+      it('should handle invalid JSON in transport.receiveData without crashing', () => {
+        const peer = peerLib.createRPCPeer({ hostName: 'other.example.com' });
+
+        // Should not throw on invalid JSON
+        expect(() => {
+          peer.transport.receiveData('not valid json {{{');
+        }).not.toThrow();
+      });
+
+      it('should handle empty string in transport.receiveData', () => {
+        const peer = peerLib.createRPCPeer({ hostName: 'other.example.com' });
+
+        // Empty string should not throw
+        expect(() => {
+          peer.transport.receiveData('');
+        }).not.toThrow();
+      });
+
+      it('should handle malformed JSON payloads gracefully', () => {
+        const peer = peerLib.createRPCPeer({ hostName: 'other.example.com' });
+
+        // Various malformed inputs - should not crash
+        const malformedInputs = ['{"unclosed": ', '[1, 2, 3', 'undefined', 'NaN'];
+
+        for (const input of malformedInputs) {
+          expect(() => {
+            peer.transport.receiveData(input);
+          }).not.toThrow();
+        }
+      });
+
+      it('should reject non-object JSON values', () => {
+        const peer = peerLib.createRPCPeer({ hostName: 'other.example.com' });
+
+        // Valid JSON but not objects - should not crash
+        const nonObjectInputs = ['"just a string"', '123', 'true', 'null'];
+
+        for (const input of nonObjectInputs) {
+          expect(() => {
+            peer.transport.receiveData(input);
+          }).not.toThrow();
+        }
+      });
+
+      it('should process valid JSON normally', () => {
+        const peer = peerLib.createRPCPeer({ hostName: 'other.example.com' });
+        const rpcEmitSpy = vi.spyOn(peer.transport, 'emit');
+
+        const validMsg = JSON.stringify({ method: 'test', params: [] });
+        peer.transport.receiveData(validMsg);
+
+        expect(rpcEmitSpy).toHaveBeenCalledWith('rpc', expect.objectContaining({ method: 'test' }));
+      });
+
+      it('should handle invalid JSON in server peer transport', () => {
+        const serverPeer = peerLib.createServerPeer();
+
+        // Should not throw on invalid JSON
+        expect(() => {
+          serverPeer.transport.receiveData('invalid json');
+        }).not.toThrow();
+      });
+
+      it('should handle null/undefined in server peer transport', () => {
+        const serverPeer = peerLib.createServerPeer();
+
+        // Null should not throw
+        expect(() => {
+          serverPeer.transport.receiveData(null);
+        }).not.toThrow();
+
+        // Undefined should not throw
+        expect(() => {
+          serverPeer.transport.receiveData(undefined);
+        }).not.toThrow();
+      });
+    });
   });
 });

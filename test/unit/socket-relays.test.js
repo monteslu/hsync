@@ -1,6 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { initRelays, setNet } from '../../lib/socket-relays.js';
+import { initRelays, setNet, isHostAllowed } from '../../lib/socket-relays.js';
 import { sockets } from '../../lib/socket-map.js';
+
+describe('isHostAllowed', () => {
+  it('should allow all hosts when no whitelist or blacklist', () => {
+    expect(isHostAllowed('any.host.com', '', '')).toBe(true);
+    expect(isHostAllowed('any.host.com', null, null)).toBe(true);
+    expect(isHostAllowed('any.host.com', undefined, undefined)).toBe(true);
+  });
+
+  it('should block hosts in blacklist', () => {
+    expect(isHostAllowed('blocked.com', '', 'blocked.com')).toBe(false);
+    expect(isHostAllowed('allowed.com', '', 'blocked.com')).toBe(true);
+  });
+
+  it('should support comma-separated blacklist', () => {
+    const blacklist = 'bad1.com, bad2.com, bad3.com';
+    expect(isHostAllowed('bad1.com', '', blacklist)).toBe(false);
+    expect(isHostAllowed('bad2.com', '', blacklist)).toBe(false);
+    expect(isHostAllowed('good.com', '', blacklist)).toBe(true);
+  });
+
+  it('should only allow hosts in whitelist when set', () => {
+    expect(isHostAllowed('allowed.com', 'allowed.com', '')).toBe(true);
+    expect(isHostAllowed('other.com', 'allowed.com', '')).toBe(false);
+  });
+
+  it('should support comma-separated whitelist', () => {
+    const whitelist = 'good1.com, good2.com';
+    expect(isHostAllowed('good1.com', whitelist, '')).toBe(true);
+    expect(isHostAllowed('good2.com', whitelist, '')).toBe(true);
+    expect(isHostAllowed('bad.com', whitelist, '')).toBe(false);
+  });
+
+  it('should support wildcard * to match all', () => {
+    expect(isHostAllowed('any.host.com', '*', '')).toBe(true);
+  });
+
+  it('should support wildcard subdomain matching', () => {
+    expect(isHostAllowed('sub.example.com', '*.example.com', '')).toBe(true);
+    expect(isHostAllowed('deep.sub.example.com', '*.example.com', '')).toBe(true);
+    expect(isHostAllowed('example.com', '*.example.com', '')).toBe(true);
+    expect(isHostAllowed('other.com', '*.example.com', '')).toBe(false);
+  });
+
+  it('should check blacklist before whitelist', () => {
+    // If host is blacklisted, reject even if it would match whitelist
+    expect(isHostAllowed('blocked.com', '*', 'blocked.com')).toBe(false);
+  });
+
+  it('should handle empty host gracefully', () => {
+    expect(isHostAllowed('', 'allowed.com', '')).toBe(false);
+    expect(isHostAllowed(null, 'allowed.com', '')).toBe(false);
+  });
+});
 
 describe('socket-relays', () => {
   let mockNet;
@@ -310,6 +363,91 @@ describe('socket-relays', () => {
       errorHandler(new Error('Connection failed'));
 
       await expect(connectPromise).rejects.toThrow('Connection failed');
+    });
+
+    it('should reject connection when host is blacklisted', () => {
+      relays.addSocketRelay({
+        port: 3000,
+        blacklist: 'blocked.example.com',
+      });
+
+      mockPeer.hostName = 'blocked.example.com';
+
+      expect(() =>
+        relays.connectSocket(mockPeer, {
+          port: 3000,
+          socketId: 'test-socket',
+          hostName: 'blocked.example.com',
+        })
+      ).toThrow('host blocked.example.com not allowed for relay on port 3000');
+    });
+
+    it('should reject connection when host not in whitelist', () => {
+      relays.addSocketRelay({
+        port: 3000,
+        whitelist: 'allowed.example.com',
+      });
+
+      mockPeer.hostName = 'other.example.com';
+
+      expect(() =>
+        relays.connectSocket(mockPeer, {
+          port: 3000,
+          socketId: 'test-socket',
+          hostName: 'other.example.com',
+        })
+      ).toThrow('host other.example.com not allowed for relay on port 3000');
+    });
+
+    it('should allow connection when host is whitelisted', async () => {
+      relays.addSocketRelay({
+        port: 3000,
+        whitelist: 'allowed.example.com',
+      });
+
+      mockPeer.hostName = 'allowed.example.com';
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'test-socket',
+        hostName: 'allowed.example.com',
+      });
+
+      expect(result.socketId).toBe('test-socket');
+    });
+
+    it('should allow connection when host not blacklisted', async () => {
+      relays.addSocketRelay({
+        port: 3000,
+        blacklist: 'blocked.example.com',
+      });
+
+      mockPeer.hostName = 'allowed.example.com';
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'test-socket',
+        hostName: 'allowed.example.com',
+      });
+
+      expect(result.socketId).toBe('test-socket');
+    });
+
+    it('should support wildcard whitelist patterns', async () => {
+      relays.addSocketRelay({
+        port: 3000,
+        whitelist: '*.trusted.com',
+      });
+
+      mockPeer.hostName = 'agent.trusted.com';
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'test-socket',
+        hostName: 'agent.trusted.com',
+      });
+
+      expect(result.socketId).toBe('test-socket');
     });
   });
 });

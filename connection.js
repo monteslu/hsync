@@ -190,14 +190,7 @@ export async function createHsync(config) {
       // Security: Validate authentication token before processing any RPC request
       // CVE-HSYNC-2026-003: Previously, myAuth was sent but never verified
       if (peer.myAuth !== myAuth) {
-        debug(
-          'peerRpc auth failed',
-          requestInfo.fromHost,
-          'expected:',
-          peer.myAuth,
-          'got:',
-          myAuth
-        );
+        debug('peerRpc auth failed', requestInfo.fromHost, myAuth ? 'invalid token' : 'missing token');
         const authError = new Error('RPC authentication failed: invalid or missing auth token');
         authError.code = 401;
         throw authError;

@@ -68,6 +68,27 @@ describe('socket-relays', () => {
       expect(mockHsyncClient.addSocketRelay).toBeTypeOf('function');
       expect(mockHsyncClient.getSocketRelays).toBeTypeOf('function');
       expect(mockHsyncClient.connectSocket).toBeTypeOf('function');
+      expect(mockHsyncClient.setWebPort).toBeTypeOf('function');
+    });
+
+    it('should return setWebPort in returned object', () => {
+      const relays = initRelays(mockHsyncClient);
+
+      expect(relays.setWebPort).toBeTypeOf('function');
+    });
+  });
+
+  describe('setWebPort', () => {
+    let relays;
+
+    beforeEach(() => {
+      relays = initRelays(mockHsyncClient);
+    });
+
+    it('should store web port for auto-relay', () => {
+      // setWebPort stores the port internally - no return value
+      relays.setWebPort(3000);
+      // No error means success
     });
   });
 
@@ -199,6 +220,55 @@ describe('socket-relays', () => {
           hostName: 'remote.example.com',
         })
       ).toThrow('no relay found for port: 9999');
+    });
+
+    it('should auto-create relay for web port (issue #15)', async () => {
+      // Set web port without explicit relay
+      relays.setWebPort(3000);
+
+      // Should NOT throw - should auto-create relay for web port
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'auto-relay-socket',
+        hostName: 'remote.example.com',
+      });
+
+      expect(result.socketId).toBe('auto-relay-socket');
+      expect(result.targetHost).toBe('localhost');
+      expect(result.targetPort).toBe(3000);
+      expect(mockSocket.connect).toHaveBeenCalledWith(3000, 'localhost', expect.any(Function));
+    });
+
+    it('should still throw for non-web ports when web port is set', () => {
+      relays.setWebPort(3000);
+
+      // Different port should still throw
+      expect(() =>
+        relays.connectSocket(mockPeer, {
+          port: 9999,
+          socketId: 'test-socket',
+          hostName: 'remote.example.com',
+        })
+      ).toThrow('no relay found for port: 9999');
+    });
+
+    it('should prefer explicit relay over auto-relay', async () => {
+      relays.setWebPort(3000);
+      relays.addSocketRelay({
+        port: 3000,
+        targetPort: 4000,
+        targetHost: 'custom-host.local',
+      });
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'explicit-relay-socket',
+        hostName: 'remote.example.com',
+      });
+
+      // Should use explicit relay config, not auto-relay
+      expect(result.targetHost).toBe('custom-host.local');
+      expect(result.targetPort).toBe(4000);
     });
 
     it('should create socket and connect to relay target', async () => {

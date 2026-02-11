@@ -67,6 +67,11 @@ export async function createHsync(config) {
   hsyncClient.listeners = initListeners(hsyncClient);
   hsyncClient.relays = initRelays(hsyncClient);
 
+  // Enable auto-relay for web port (issue #15)
+  if (port) {
+    hsyncClient.relays.setWebPort(port);
+  }
+
   const events = new EventEmitter();
 
   hsyncClient.on = events.on.bind(events);

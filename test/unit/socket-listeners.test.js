@@ -190,6 +190,7 @@ describe('socket-listeners', () => {
         port: 3000,
         targetHost: 'https://remote.example.com',
         targetPort: 4000,
+        hasPassword: false,
       });
     });
 
@@ -314,6 +315,62 @@ describe('socket-listeners', () => {
           hostName: 'remote.example.com',
         })
       );
+    });
+
+    it('should pass password to connectSocket', async () => {
+      listeners.addSocketListener({
+        port: 3000,
+        targetPort: 4000,
+        targetHost: 'https://remote.example.com',
+        password: 'secret123',
+      });
+
+      // Trigger socket connection
+      const connectionHandler = mockNet.createServer.mock.calls[0][0];
+      connectionHandler(mockSocket);
+
+      // Wait for connection attempt
+      await vi.waitFor(() => {
+        expect(mockRpcPeer.methods.connectSocket).toHaveBeenCalled();
+      });
+
+      expect(mockRpcPeer.methods.connectSocket).toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: 'secret123',
+        })
+      );
+    });
+  });
+
+  describe('addSocketListener with password', () => {
+    let listeners;
+
+    beforeEach(() => {
+      listeners = initListeners(mockHsyncClient);
+    });
+
+    it('should store password in listener', () => {
+      const listener = listeners.addSocketListener({
+        port: 3000,
+        targetHost: 'https://remote.example.com',
+        password: 'secret123',
+      });
+
+      expect(listener.password).toBe('secret123');
+    });
+
+    it('should indicate hasPassword in getSocketListeners', () => {
+      listeners.addSocketListener({
+        port: 3000,
+        targetHost: 'https://remote.example.com',
+        password: 'secret123',
+      });
+
+      const result = listeners.getSocketListeners();
+
+      expect(result[0].hasPassword).toBe(true);
+      // Password should NOT be exposed
+      expect(result[0].password).toBeUndefined();
     });
   });
 });

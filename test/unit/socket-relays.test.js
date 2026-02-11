@@ -181,6 +181,7 @@ describe('socket-relays', () => {
         whitelist: 'allowed.com',
         blacklist: 'blocked.com',
         hostName: 'myserver.local',
+        hasPassword: false,
       });
     });
 
@@ -380,6 +381,97 @@ describe('socket-relays', () => {
       errorHandler(new Error('Connection failed'));
 
       await expect(connectPromise).rejects.toThrow('Connection failed');
+    });
+
+    it('should connect successfully with correct password', async () => {
+      relays.addSocketRelay({
+        port: 3000,
+        password: 'secret123',
+      });
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'test-socket',
+        hostName: 'remote.example.com',
+        password: 'secret123',
+      });
+
+      expect(result.socketId).toBe('test-socket');
+    });
+
+    it('should throw if password required but not provided', () => {
+      relays.addSocketRelay({
+        port: 3000,
+        password: 'secret123',
+      });
+
+      expect(() => {
+        relays.connectSocket(mockPeer, {
+          port: 3000,
+          socketId: 'test-socket',
+          hostName: 'remote.example.com',
+        });
+      }).toThrow('password required for relay on port: 3000');
+    });
+
+    it('should throw if password is incorrect', () => {
+      relays.addSocketRelay({
+        port: 3000,
+        password: 'secret123',
+      });
+
+      expect(() => {
+        relays.connectSocket(mockPeer, {
+          port: 3000,
+          socketId: 'test-socket',
+          hostName: 'remote.example.com',
+          password: 'wrongpassword',
+        });
+      }).toThrow('invalid password for relay on port: 3000');
+    });
+
+    it('should connect without password if relay has no password', async () => {
+      relays.addSocketRelay({
+        port: 3000,
+      });
+
+      const result = await relays.connectSocket(mockPeer, {
+        port: 3000,
+        socketId: 'test-socket',
+        hostName: 'remote.example.com',
+      });
+
+      expect(result.socketId).toBe('test-socket');
+    });
+  });
+
+  describe('addSocketRelay with password', () => {
+    let relays;
+
+    beforeEach(() => {
+      relays = initRelays(mockHsyncClient);
+    });
+
+    it('should store password in relay', () => {
+      const relay = relays.addSocketRelay({
+        port: 3000,
+        password: 'secret123',
+      });
+
+      expect(relay.password).toBe('secret123');
+    });
+
+    it('should indicate hasPassword in getSocketRelays', () => {
+      relays.addSocketRelay({
+        port: 3000,
+        password: 'secret123',
+      });
+
+      const result = relays.getSocketRelays();
+
+      expect(result[0].hasPassword).toBe(true);
+      // Password should NOT be exposed
+      expect(result[0].password).toBeUndefined();
     });
   });
 });

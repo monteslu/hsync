@@ -38,6 +38,8 @@ export async function createHsync(config) {
     relayInboundPort,
     relayTargetHost,
     relayTargetPort,
+    listenerPassword,
+    relayPassword,
   } = config;
   const { dynamicHost } = config;
   let { hsyncServer, hsyncSecret } = config;
@@ -272,7 +274,8 @@ export async function createHsync(config) {
           lth = lth.substring(0, lth.length - 1);
         }
         const ltp = listenerTargetPort ? listenerTargetPort[i] : llp;
-        hsyncClient.addSocketListener({ port: llp, targetPort: ltp, targetHost: lth });
+        const lpwd = listenerPassword ? listenerPassword[i] || listenerPassword[0] : undefined;
+        hsyncClient.addSocketListener({ port: llp, targetPort: ltp, targetHost: lth, password: lpwd });
         debug('relaying local', llp, 'to', lth, ltp);
       }
     });
@@ -288,7 +291,8 @@ export async function createHsync(config) {
           rth = rth.substring(0, rth.length - 1);
         }
         const rtp = relayTargetPort ? relayTargetPort[i] : rip;
-        hsyncClient.addSocketRelay({ port: rip, targetHost: rth, targetPort: rtp });
+        const rpwd = relayPassword ? relayPassword[i] || relayPassword[0] : undefined;
+        hsyncClient.addSocketRelay({ port: rip, targetHost: rth, targetPort: rtp, password: rpwd });
         debug('relaying inbound', rip, 'to', rth, rtp);
       }
     });
@@ -296,3 +300,4 @@ export async function createHsync(config) {
 
   return hsyncClient;
 }
+

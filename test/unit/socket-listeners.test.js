@@ -1,5 +1,49 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { initListeners, setNet } from '../../lib/socket-listeners.js';
+import { initListeners, setNet, isSameHost } from '../../lib/socket-listeners.js';
+
+describe('isSameHost', () => {
+  it('should match identical hostnames', () => {
+    expect(isSameHost('example.com', 'example.com')).toBe(true);
+  });
+
+  it('should be case insensitive', () => {
+    expect(isSameHost('Example.COM', 'example.com')).toBe(true);
+    expect(isSameHost('LOCALHOST', 'localhost')).toBe(true);
+  });
+
+  it('should handle trailing dots (DNS root)', () => {
+    expect(isSameHost('example.com.', 'example.com')).toBe(true);
+    expect(isSameHost('example.com', 'example.com.')).toBe(true);
+  });
+
+  it('should match localhost aliases', () => {
+    expect(isSameHost('localhost', '127.0.0.1')).toBe(true);
+    expect(isSameHost('localhost', '::1')).toBe(true);
+    expect(isSameHost('127.0.0.1', '::1')).toBe(true);
+    expect(isSameHost('localhost', '0.0.0.0')).toBe(true);
+  });
+
+  it('should handle IPv6 brackets', () => {
+    expect(isSameHost('[::1]', '::1')).toBe(true);
+    expect(isSameHost('[::1]', 'localhost')).toBe(true);
+  });
+
+  it('should handle expanded IPv6 localhost', () => {
+    expect(isSameHost('0:0:0:0:0:0:0:1', '::1')).toBe(true);
+    expect(isSameHost('0:0:0:0:0:0:0:1', 'localhost')).toBe(true);
+  });
+
+  it('should not match different hosts', () => {
+    expect(isSameHost('example.com', 'other.com')).toBe(false);
+    expect(isSameHost('localhost', 'example.com')).toBe(false);
+  });
+
+  it('should handle empty/null inputs', () => {
+    expect(isSameHost('', '')).toBe(true);
+    expect(isSameHost('example.com', '')).toBe(false);
+    expect(isSameHost('', 'example.com')).toBe(false);
+  });
+});
 
 describe('socket-listeners', () => {
   let mockNet;
@@ -96,6 +140,60 @@ describe('socket-listeners', () => {
         listeners.addSocketListener({
           port: 3000,
           targetHost: 'https://local.example.com',
+        })
+      ).toThrow('targetHost must be a different host');
+    });
+
+    it('should throw if targetHost matches client with different case', () => {
+      expect(() =>
+        listeners.addSocketListener({
+          port: 3000,
+          targetHost: 'https://LOCAL.EXAMPLE.COM',
+        })
+      ).toThrow('targetHost must be a different host');
+    });
+
+    it('should throw if targetHost matches client with trailing dot', () => {
+      expect(() =>
+        listeners.addSocketListener({
+          port: 3000,
+          targetHost: 'https://local.example.com.',
+        })
+      ).toThrow('targetHost must be a different host');
+    });
+
+    it('should block localhost bypass via 127.0.0.1', () => {
+      mockHsyncClient.myHostName = 'localhost';
+      listeners = initListeners(mockHsyncClient);
+
+      expect(() =>
+        listeners.addSocketListener({
+          port: 3000,
+          targetHost: 'https://127.0.0.1',
+        })
+      ).toThrow('targetHost must be a different host');
+    });
+
+    it('should block localhost bypass via IPv6 ::1', () => {
+      mockHsyncClient.myHostName = 'localhost';
+      listeners = initListeners(mockHsyncClient);
+
+      expect(() =>
+        listeners.addSocketListener({
+          port: 3000,
+          targetHost: 'https://[::1]',
+        })
+      ).toThrow('targetHost must be a different host');
+    });
+
+    it('should block localhost bypass via 0.0.0.0', () => {
+      mockHsyncClient.myHostName = '127.0.0.1';
+      listeners = initListeners(mockHsyncClient);
+
+      expect(() =>
+        listeners.addSocketListener({
+          port: 3000,
+          targetHost: 'https://0.0.0.0',
         })
       ).toThrow('targetHost must be a different host');
     });

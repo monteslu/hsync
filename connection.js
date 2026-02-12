@@ -47,12 +47,23 @@ export async function createHsync(config) {
   let dynamicTimeout;
 
   if (dynamicHost && !hsyncSecret) {
-    const result = await fetch.post(`${dynamicHost}/${hsyncBase}/dyn`, {});
-    if (dynamicHost.toLowerCase().startsWith('https')) {
-      hsyncServer = `wss://${result.url}`;
-    } else {
-      hsyncServer = `ws://${result.url}`;
+    // Validate dynamicHost to prevent URL injection/SSRF (CVE-HSYNC-2026-004)
+    let validatedHost;
+    let isSecure;
+    try {
+      const parsed = new URL(dynamicHost);
+      // Only allow http/https protocols
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        throw new Error(`Invalid protocol: ${parsed.protocol}`);
+      }
+      isSecure = parsed.protocol === 'https:';
+      // Reconstruct URL with only origin to strip path/query/fragment
+      validatedHost = parsed.origin;
+    } catch (urlErr) {
+      throw new Error(`Invalid dynamicHost URL: ${urlErr.message}`);
     }
+    const result = await fetch.post(`${validatedHost}/${hsyncBase}/dyn`, {});
+    hsyncServer = isSecure ? `wss://${result.url}` : `ws://${result.url}`;
     hsyncSecret = result.secret;
     dynamicTimeout = result.timeout;
   }

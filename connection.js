@@ -187,10 +187,20 @@ export async function createHsync(config) {
     getSocketRelays: hsyncClient.getSocketRelays,
     peerRpc: async (requestInfo) => {
       requestInfo.hsyncClient = hsyncClient;
-      const { msg } = requestInfo;
+      const { msg, myAuth } = requestInfo;
       debug('peerRpc handler', requestInfo.fromHost, msg.method);
       const peer = hsyncClient.peers.getRPCPeer({ hostName: requestInfo.fromHost, hsyncClient });
       requestInfo.peer = peer;
+
+      // Security: Validate authentication token before processing any RPC request
+      // CVE-HSYNC-2026-003: Previously, myAuth was sent but never verified
+      if (peer.myAuth !== myAuth) {
+        debug('peerRpc auth failed', requestInfo.fromHost, myAuth ? 'invalid token' : 'missing token');
+        const authError = new Error('RPC authentication failed: invalid or missing auth token');
+        authError.code = 401;
+        throw authError;
+      }
+
       if (!msg.id) {
         // notification
         if (Array.isArray(msg.params)) {
